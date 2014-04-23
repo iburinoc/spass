@@ -25,6 +25,7 @@ passw_t* init_pw(char* name, char* pass, uint8_t nonce[12], AES_KEY* key) {
 	pw->passlen = plen;
 	
 	memcpy(pw->name, name, nlen + 1);
+	pw->namelen = nlen;
 	
 	memcpy(pw->nonce, nonce, 16);
 	
@@ -58,7 +59,7 @@ err0:
 
 void free_pw(passw_t* pw) {
 	if(pw->name) {
-		memset(pw->name, 0, strlen(pw->name));
+		memset(pw->name, 0, pw->namelen + 1);
 		free(pw->name);
 	}
 	if(pw->pass) {
@@ -70,4 +71,10 @@ void free_pw(passw_t* pw) {
 	free(pw);
 	
 	/* success! */
+}
+
+/* return the size of this password when serialized */
+size_t serial_size(passw_t* pw) {
+	/* sizeof(namelen) + sizeof(passlen) + sizeof(nonce) + len(name) + len(pass) */
+	return 4 + 4 + 16 + pw->namelen + 1 + pw->pass;
 }

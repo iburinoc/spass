@@ -8,6 +8,7 @@
 typedef struct {
 	char*       name;
 	uint8_t*    pass;
+	size_t      namelen;
 	size_t      passlen;
 	uint8_t     nonce[16];
 } passw_t;
@@ -20,5 +21,8 @@ char* dec_pw(passw_t* pw, AES_KEY* key);
 
 /* frees the password struct, should be used instead of free */
 void free_pw(passw_t* pw);
+
+/* return the size of this password when serialized */
+size_t serial_size(passw_t* pw);
 
 #endif
