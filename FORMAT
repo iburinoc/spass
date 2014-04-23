@@ -1,0 +1,34 @@
+encrypted file format
+=====================
+
+offset  length  purpose
+------  ------  -------------------------------------------------
+0       5       magic: "spass"
+5       2       format version number (00 for now)
+7       1       logN (scrypt parameter)
+8       4       r (big-endian integer; must satisfy r * p < 2^30)
+12      4       p (big-endian integer; must satisfy r * p < 2^30)
+16      32      salt for scrypt
+48      16      cbc iv
+64      32      HMAC-SHA256(0 .. 63)
+96      X       data encrypted using AES256-CBC
+96+X    32      HMAC-SHA256(0 .. 96 + (X-1))
+
+serialized db format
+====================
+
+offset  length  purpose
+------  ------  ----------------------------------------
+0       4       number of passwords (big-endian integer)
+n       l       password, defined below
+
+serialized pw format
+====================
+
+offset  length  purpose
+------  ------  --------------------
+0       4       name length
+4       4       password length
+8       16      nonce
+24      nlen    name
+24+nlen plen    password (encrypted)
