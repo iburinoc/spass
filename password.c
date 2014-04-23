@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <ibcrypt/aes.h>
+
 #include "password.h"
 
 passw_t* init_pw(char* name, char* pass, uint8_t nonce[12], AES_KEY* key) {
@@ -21,6 +23,8 @@ passw_t* init_pw(char* name, char* pass, uint8_t nonce[12], AES_KEY* key) {
 		goto err0;
 	}
 	pw->passlen = plen;
+	
+	memcpy(pw->name, name, nlen + 1);
 	
 	memcpy(pw->nonce, nonce, 16);
 	
@@ -54,9 +58,11 @@ err0:
 
 void free_pw(passw_t* pw) {
 	if(pw->name) {
+		memset(pw->name, 0, strlen(pw->name));
 		free(pw->name);
 	}
 	if(pw->pass) {
+		memset(pw->pass, 0, pw->passlen);
 		free(pw->pass);
 	}
 	
