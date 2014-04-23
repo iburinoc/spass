@@ -1,11 +1,11 @@
 CC=gcc
 CFLAGS= -g -c -O4 -Wall -std=c99
-LIBS=-libcrypt
+LIBS=-libcrypt -llibibur
 
 HEADERS=password.h
-OBJECTS=password.c
+OBJECTS=password.o
 
-TEST_OBJECTS=$(OBJECTS) test.o password.o
+TEST_OBJECTS=$(OBJECTS)
 
 .PHONY: clean cleanall remake remaketest test
 

@@ -1,7 +1,8 @@
 #include <ibcrypt/rand.h>
 
+#include <libibur/test.h>
+
 #include "password.h"
-#include "test.h"
 
 void passwordtests() {
 	char* name = "name";
