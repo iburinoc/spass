@@ -5,7 +5,7 @@ LIBS=-libcrypt -llibibur
 HEADERS=password.h
 OBJECTS=password.o
 
-TEST_OBJECTS=$(OBJECTS)
+TEST_OBJECTS=$(OBJECTS) test_suite.o password_test.o
 
 .PHONY: clean cleanall remake remaketest test
 

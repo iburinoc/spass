@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "test_suite.h"
-#include "test.h"
+#include <libibur/test.h>
+
+extern void password_tests();
 
 void (*suite[])() = {
 	password_tests

@@ -4,7 +4,7 @@
 
 #include "password.h"
 
-void passwordtests() {
+void password_tests() {
 	char* name = "name";
 	for(int i = 0; i < 100; i++) {
 		uint8_t keybytes[32];
@@ -13,7 +13,7 @@ void passwordtests() {
 		uint8_t nonce[16];
 		
 		cs_rand(keybytes, 32);
-		create_key_AES(&key, keybytes);
+		create_key_AES(keybytes, 256, &key);
 		
 		cs_rand(nonce, 16);
 		
@@ -26,7 +26,7 @@ void passwordtests() {
 		
 		passw_t* pwstr = init_pw(name, pw, nonce, &key);
 		
-		char* outpw = dec_pw(&key);
+		char* outpw = dec_pw(pwstr, &key);
 		
 		assert_equals(pw, outpw, pwstr->passlen, "PASSWORD");
 		
