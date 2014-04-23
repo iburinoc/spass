@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS= -g -c -O4 -Wall -std=c99
-LIBS=-libcrypt -llibibur
+LIBS=-libcrypt
 
 HEADERS=password.h
 OBJECTS=password.o
