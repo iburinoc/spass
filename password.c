@@ -76,5 +76,5 @@ void free_pw(passw_t* pw) {
 /* return the size of this password when serialized */
 size_t serial_size(passw_t* pw) {
 	/* sizeof(namelen) + sizeof(passlen) + sizeof(nonce) + len(name) + len(pass) */
-	return 4 + 4 + 16 + pw->namelen + 1 + pw->pass;
+	return 4 + 4 + 16 + pw->namelen + pw->pass;
 }
