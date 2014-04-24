@@ -1,5 +1,13 @@
 CC=gcc
-CFLAGS= -g -c -O4 -Wall -std=c99
+DEBUG=0
+ORIGFLAGS= -c -Wall -std=c99
+
+ifeq ($(DEBUG),1)
+	CFLAGS=$(ORIGFLAGS) -g
+else
+	CFLAGS=$(ORIGFLAGS) -O4
+endif
+
 LIBS=-libcrypt
 
 HEADERS=password.h
