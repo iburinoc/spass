@@ -7,7 +7,7 @@
 #include "password.h"
 
 /* initialize a new database */
-pwdb_t* init() {
+pwdb_t* init_db() {
 	pwdb_t* db;
 	if((db = malloc(sizeof(pwdb_t))) == NULL) {
 		errno = ENOMEM;
@@ -26,7 +26,7 @@ err0:
 }
 
 /* deserialize a database from a buffer */
-pwdb_t* deserialize(uint8_t* buf, size_t len) {
+pwdb_t* deserialize_db(uint8_t* buf, size_t len) {
 	pwdb_t* db;
 	uint32_t index = 0;
 	
@@ -77,6 +77,48 @@ err1:
 err0:
 	/* failed! */
 	return NULL;
+}
+
+void serialize_db(pwdb_t* db, uint8_t* buf) {
+	encbe32(db->num, buf);
+	buf += 4;
+	
+	uint32_t i = 0;
+	for(i = 0; i < db->num; i++) {
+		serialize_pw(db->pws[i], buf);
+		buf += serial_size_pw(db->pws[i]);
+	}
+}
+
+/* add a password to the database
+ * this method takes ownership of the password
+ * and will free it when necessary 
+ * returns 0 if successful, -1 if not */
+int db_add_pw(pwdb_t* db, passw_t* pw);
+
+/* removes the password with the given name
+ * and returns 0
+ * or returns -1 if not found */
+int db_rem_pw(pwdb_t* db, char* name);
+
+/* gets the password with the given name 
+ * and returns it, or NULL if not found.
+ * note: db maintains ownership of the password */
+passw_t* db_get(pwdb_t* db, char* name);
+
+/* returns a list of names in the database,
+ * caller owns this list, it must free it 
+ * however it does not own the names themselves 
+ * (ie only free the returned pointer) */
+char** db_list_names(pwdb_t* db) {
+	char** list = malloc(sizeof(char*) * db->num);
+	uint32_t i;
+	
+	for(i = 0; i < db->num; i++) {
+		list[i] = db->pws[i]->name;
+	}
+	
+	return list;
 }
 
 /* frees the database as well as any passwords contained */
