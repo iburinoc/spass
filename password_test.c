@@ -13,12 +13,14 @@ static void serialize_tests() {
 		
 		uint8_t nonce[16];
 		
+		uint32_t pwlen;
+		
 		cs_rand(keybytes, 32);
 		create_key_AES(keybytes, 256, &key);
 		
 		cs_rand(nonce, 16);
 		
-		size_t pwlen = 48 + (cs_rand_int() & 0x1f);
+		pwlen = 48 + (cs_rand_int() & 0x1f);
 		
 		char* pw = (char*) malloc(pwlen + 1);
 		
@@ -59,7 +61,7 @@ void initdec_tests() {
 		
 		cs_rand(nonce, 16);
 		
-		size_t pwlen = 48 + (cs_rand_int() & 0x1f);
+		uint32_t pwlen = 48 + (cs_rand_int() & 0x1f);
 		
 		char* pw = (char*) malloc(pwlen + 1);
 		
