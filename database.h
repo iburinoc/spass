@@ -2,6 +2,7 @@
 #define SPASS_DATABASE_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "password.h"
 #include "spasserr.h"
@@ -21,7 +22,7 @@ pwdb_t* deserialize_db(uint8_t* buf, size_t len);
 /* serializes the database to the buffer.
  * buf must be at least serial_size_db(db)
  */
-uint64_t serialize_db(pwdb_t* db, uint8_t* buf);
+void serialize_db(pwdb_t* db, uint8_t* buf);
 
 /* find the password in the sorted database and return the index
  * if not found, return 2^32-1 and set errno to EINVAL
@@ -49,7 +50,7 @@ int db_rem_pw(pwdb_t* db, char* name);
 /* gets the password with the given name 
  * and returns it, or NULL if not found.
  * note: db maintains ownership of the password */
-passw_t* db_get(pwdb_t* db, char* name);
+passw_t* db_get_pw(pwdb_t* db, char* name);
 
 /* returns a list of names in the database,
  * caller owns this list, it must free it 

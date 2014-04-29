@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <libibur/endian.h>
 
@@ -80,6 +82,9 @@ err0:
 	return NULL;
 }
 
+/* serializes the database to the buffer.
+ * buf must be at least serial_size_db(db)
+ */
 void serialize_db(pwdb_t* db, uint8_t* buf) {
 	encbe32(db->num, buf);
 	buf += 4;
@@ -96,17 +101,21 @@ void serialize_db(pwdb_t* db, uint8_t* buf) {
  * NOTE: 2^32-1 response is not enough to determine a failure
  * as it is a valid index */
 uint32_t find_pw(pwdb_t* db, char* name) {
+	if(db->num == 0) {
+		errno = EINVAL;
+		return (uint32_t) (((uint64_t)(1) << 32) - 1);
+	}
 	uint32_t min = 0;
 	uint32_t max = db->num;
 	while(1) {
 		uint32_t mid = min + (max-min) / 2;
-		int cmp = strcmp(name, db->pws[mid]);
+		int cmp = strcmp(name, db->pws[mid]->name);
 		if(cmp == 0) {
 			return mid;
 		} else {
 			if(mid == min) {
 				errno = EINVAL;
-				return (uint32_t) ((1 << 32) - 1);
+				return (uint32_t) (((uint64_t)(1) << 32) - 1);
 			}
 			if(cmp < 0) {
 				max = mid;
@@ -121,11 +130,14 @@ uint32_t find_pw(pwdb_t* db, char* name) {
  * behaviour undefined if the password is already
  * in the database */
 uint32_t inspos_pw(pwdb_t* db, char* name) {
+	if(db->num == 0) {
+		return 0;
+	}
 	uint32_t min = 0;
 	uint32_t max = db->num;
 	while(1) {
 		uint32_t mid = min + (max-min) / 2;
-		int cmp = strcmp(name, db->pws[mid]);
+		int cmp = strcmp(name, db->pws[mid]->name);
 		if(cmp == 0) {
 			return mid;
 		} else {
@@ -141,7 +153,7 @@ uint32_t inspos_pw(pwdb_t* db, char* name) {
 	}
 }
 
-static bool pw_exists(pwdb_t* db, char* name) {
+static int pw_exists(pwdb_t* db, char* name) {
 	errno = 0;
 	find_pw(db, name);
 	
@@ -159,23 +171,25 @@ int db_add_pw(pwdb_t* db, passw_t* pw) {
 		return PW_EXISTS;
 	}
 	
-	if(db->num == ((uint64_t)(1) << 32 - 2)) {
+	if(db->num > (((uint64_t)(1) << 32) - 2)) {
 		/* no space for new password */
 		return DB_FULL;
 	}
 	
 	/* index of inserted password */
 	uint32_t inspos = inspos_pw(db, pw->name);
-	/* pointer to insert position of password */
-	passw_t** inspt = db->pws + inspos * sizeof(passw_t*);
 	
 	/* make the space for the password */
 	if((db->pws = realloc(db->pws, (db->num + 1) * sizeof(passw_t*))) == NULL) {
 		/* could not allocate memory */
 		return ALLOC_FAIL;
 	}
-	memmove(inspt + sizeof(passw_t*), inspt, (db->pws + db->num * sizeof(passw_t*)) - inspt);
 	
+	/* pointer to insert position of password */
+	passw_t** inspt = db->pws + inspos * sizeof(passw_t*);
+	
+	memmove(inspt + sizeof(passw_t*), inspt, (db->pws + (db->num + 1) * sizeof(passw_t*)) - inspt);
+
 	/* success! */
 	db->pws[inspos] = pw;
 	db->num++;
@@ -187,7 +201,7 @@ int db_add_pw(pwdb_t* db, passw_t* pw) {
  * and returns 0
  * or returns -1 if not found */
 int db_rem_pw(pwdb_t* db, char* name) {
-	if(!pw_exists(db, pw->name)) {
+	if(!pw_exists(db, name)) {
 		/* password does not exist under this name */
 		return PW_NEXISTS;
 	}
@@ -195,7 +209,7 @@ int db_rem_pw(pwdb_t* db, char* name) {
 	/* index of password */
 	uint32_t rmpos = find_pw(db, name);
 	/* pointer to remove position */
-	passw_t** rmpt = db->pws + db->rmpos * sizeof(passw_t*);
+	passw_t** rmpt = db->pws + rmpos * sizeof(passw_t*);
 	/* password to be removed, stored in case of emergency */
 	passw_t* rmpw  = *rmpt;
 
@@ -215,6 +229,7 @@ int db_rem_pw(pwdb_t* db, char* name) {
 	/* free password being removed as we own it,
 	 * password should be copied if someone wants to keep it */
 	free_pw(rmpw);
+	db->num--;
 	
 	/* success! */
 	return SUCCESS;
@@ -224,7 +239,7 @@ int db_rem_pw(pwdb_t* db, char* name) {
  * and returns it, or NULL if not found.
  * note: db maintains ownership of the password.
  * do not free. */
-passw_t* db_get(pwdb_t* db, char* name) {
+passw_t* db_get_pw(pwdb_t* db, char* name) {
 	errno = 0;
 	uint32_t pos = find_pw(db, name);
 	if(errno == EINVAL) {
