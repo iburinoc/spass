@@ -33,6 +33,14 @@ void database_search_tests() {
 		assert_equals(decpw, password, strlen(password)+1, "DATABASE");
 		
 		assert_true(db_add_pw(db, pw) == PW_EXISTS, "DATABASE");
+		
+		free(decpw);
+	}
+	
+	for(int i = 0; i < 26; i++) {
+		n[0] = (char) (65 + i);
+		
+		db_rem_pw(db, n);
 	}
 	
 	free_db(db);
