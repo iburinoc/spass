@@ -14,7 +14,7 @@ typedef struct {
 } passw_t;
 
 /* this password should be freed with a call to free_pw and nonce should be random */
-passw_t* init_pw(char* name, char* pass, uint32_t plen, uint8_t nonce[16], AES_KEY* key);
+passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key);
 
 /* deserialize a password from the stream */
 passw_t* deserialize_pw(uint8_t* stream);

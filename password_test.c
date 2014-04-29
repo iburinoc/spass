@@ -11,14 +11,10 @@ static void serialize_tests() {
 		uint8_t keybytes[32];
 		AES_KEY key;
 		
-		uint8_t nonce[16];
-		
 		uint32_t pwlen;
 		
 		cs_rand(keybytes, 32);
 		create_key_AES(keybytes, 256, &key);
-		
-		cs_rand(nonce, 16);
 		
 		pwlen = 48 + (cs_rand_int() & 0x1f);
 		
@@ -27,7 +23,7 @@ static void serialize_tests() {
 		cs_rand(pw, pwlen);
 		pw[pwlen] = '\0';
 		
-		passw_t* pwstr = init_pw(name, pw, pwlen, nonce, &key);
+		passw_t* pwstr = init_pw(name, pw, pwlen, &key);
 		
 		uint8_t* buf = malloc(serial_size_pw(pwstr));
 		
@@ -54,12 +50,8 @@ void initdec_tests() {
 		uint8_t keybytes[32];
 		AES_KEY key;
 		
-		uint8_t nonce[16];
-		
 		cs_rand(keybytes, 32);
 		create_key_AES(keybytes, 256, &key);
-		
-		cs_rand(nonce, 16);
 		
 		uint32_t pwlen = 48 + (cs_rand_int() & 0x1f);
 		
@@ -68,7 +60,7 @@ void initdec_tests() {
 		cs_rand(pw, pwlen);
 		pw[pwlen] = '\0';
 		
-		passw_t* pwstr = init_pw(name, pw, pwlen, nonce, &key);
+		passw_t* pwstr = init_pw(name, pw, pwlen, &key);
 		
 		char* outpw = dec_pw(pwstr, &key);
 		

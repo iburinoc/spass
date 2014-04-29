@@ -5,10 +5,11 @@
 #include <libibur/endian.h>
 
 #include <ibcrypt/aes.h>
+#include <ibcrypt/rand.h>
 
 #include "password.h"
 
-passw_t* init_pw(char* name, char* pass, uint32_t plen, uint8_t nonce[16], AES_KEY* key) {
+passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key) {
 	passw_t* pw;
 	if((pw = (passw_t*) malloc(sizeof(passw_t))) == NULL) {
 		errno = ENOMEM;
@@ -33,7 +34,7 @@ passw_t* init_pw(char* name, char* pass, uint32_t plen, uint8_t nonce[16], AES_K
 	memcpy(pw->name, name, nlen + 1);
 	pw->namelen = nlen;
 	
-	memcpy(pw->nonce, nonce, 16);
+	cs_rand(pw->nonce, 16);
 	
 	/* encrypt password in ctr mode */
 	encrypt_ctr_AES((uint8_t*) pass, plen, pw->nonce, key, pw->pass);
