@@ -5,6 +5,7 @@
 
 #include "database.h"
 #include "password.h"
+#include "spasserr.h"
 
 /* initialize a new database */
 pwdb_t* init_db() {
@@ -90,21 +91,148 @@ void serialize_db(pwdb_t* db, uint8_t* buf) {
 	}
 }
 
+/* find the password in the sorted database and return the index
+ * if not found, return 2^32-1 and set errno to EINVAL
+ * NOTE: 2^32-1 response is not enough to determine a failure
+ * as it is a valid index */
+uint32_t find_pw(pwdb_t* db, char* name) {
+	uint32_t min = 0;
+	uint32_t max = db->num;
+	while(1) {
+		uint32_t mid = min + (max-min) / 2;
+		int cmp = strcmp(name, db->pws[mid]);
+		if(cmp == 0) {
+			return mid;
+		} else {
+			if(mid == min) {
+				errno = EINVAL;
+				return (uint32_t) ((1 << 32) - 1);
+			}
+			if(cmp < 0) {
+				max = mid;
+			} else {
+				min = mid;
+			}
+		}
+	}
+}
+
+/* find where the password should be inserted 
+ * behaviour undefined if the password is already
+ * in the database */
+uint32_t inspos_pw(pwdb_t* db, char* name) {
+	uint32_t min = 0;
+	uint32_t max = db->num;
+	while(1) {
+		uint32_t mid = min + (max-min) / 2;
+		int cmp = strcmp(name, db->pws[mid]);
+		if(cmp == 0) {
+			return mid;
+		} else {
+			if(mid == min) {
+				return mid + 1;
+			}
+			if(cmp < 0) {
+				max = mid;
+			} else {
+				min = mid;
+			}
+		}
+	}
+}
+
+static bool pw_exists(pwdb_t* db, char* name) {
+	errno = 0;
+	find_pw(db, name);
+	
+	/* check if this password already exists in the databse */
+	return errno == 0;
+}
+
 /* add a password to the database
  * this method takes ownership of the password
  * and will free it when necessary 
  * returns 0 if successful, -1 if not */
-int db_add_pw(pwdb_t* db, passw_t* pw);
+int db_add_pw(pwdb_t* db, passw_t* pw) {
+	if(pw_exists(db, pw->name)) {
+		/* password already exists under this name */
+		return PW_EXISTS;
+	}
+	
+	if(db->num == ((uint64_t)(1) << 32 - 2)) {
+		/* no space for new password */
+		return DB_FULL;
+	}
+	
+	/* index of inserted password */
+	uint32_t inspos = inspos_pw(db, pw->name);
+	/* pointer to insert position of password */
+	passw_t** inspt = db->pws + inspos * sizeof(passw_t*);
+	
+	/* make the space for the password */
+	if((db->pws = realloc(db->pws, (db->num + 1) * sizeof(passw_t*))) == NULL) {
+		/* could not allocate memory */
+		return ALLOC_FAIL;
+	}
+	memmove(inspt + sizeof(passw_t*), inspt, (db->pws + db->num * sizeof(passw_t*)) - inspt);
+	
+	/* success! */
+	db->pws[inspos] = pw;
+	db->num++;
+	
+	return SUCCESS;
+}
 
 /* removes the password with the given name
  * and returns 0
  * or returns -1 if not found */
-int db_rem_pw(pwdb_t* db, char* name);
+int db_rem_pw(pwdb_t* db, char* name) {
+	if(!pw_exists(db, pw->name)) {
+		/* password does not exist under this name */
+		return PW_NEXISTS;
+	}
+
+	/* index of password */
+	uint32_t rmpos = find_pw(db, name);
+	/* pointer to remove position */
+	passw_t** rmpt = db->pws + db->rmpos * sizeof(passw_t*);
+	/* password to be removed, stored in case of emergency */
+	passw_t* rmpw  = *rmpt;
+
+	/* move the passwords after the removed one to take its place */
+	memmove(rmpt, rmpt + sizeof(passw_t*), (db->pws + db->num * sizeof(passw_t*)) - (rmpt + sizeof(passw_t*)));
+	/* database could be empty */
+	if((db->pws = realloc(db->pws, (db->num - 1) * sizeof(passw_t*))) == NULL && db->num != 1) {
+		/* could not allocate memory */
+		/* cannot return immediately as memory has already been moved */
+		memmove(rmpt + sizeof(passw_t*), rmpt, (db->pws + db->num * sizeof(passw_t*)) - (rmpt + sizeof(passw_t*)));
+		*rmpt = rmpw;
+		
+		/* database has been fixed, return failure */
+		return ALLOC_FAIL;
+	}
+
+	/* free password being removed as we own it,
+	 * password should be copied if someone wants to keep it */
+	free_pw(rmpw);
+	
+	/* success! */
+	return SUCCESS;
+}
 
 /* gets the password with the given name 
  * and returns it, or NULL if not found.
- * note: db maintains ownership of the password */
-passw_t* db_get(pwdb_t* db, char* name);
+ * note: db maintains ownership of the password.
+ * do not free. */
+passw_t* db_get(pwdb_t* db, char* name) {
+	errno = 0;
+	uint32_t pos = find_pw(db, name);
+	if(errno == EINVAL) {
+		return NULL;
+	}
+	
+	return db->pws[pos];
+}
 
 /* returns a list of names in the database,
  * caller owns this list, it must free it 

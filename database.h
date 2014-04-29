@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "password.h"
+#include "spasserr.h"
 
 /* password database struct */
 typedef struct {
@@ -22,15 +23,27 @@ pwdb_t* deserialize_db(uint8_t* buf, size_t len);
  */
 uint64_t serialize_db(pwdb_t* db, uint8_t* buf);
 
+/* find the password in the sorted database and return the index
+ * if not found, return 2^32-1 and set errno to EINVAL
+ * NOTE: 2^32-1 response is not enough to determine a failure
+ * as it is a valid index */
+uint32_t find_pw(pwdb_t* db, char* name);
+
+/* find where the password should be inserted 
+ * behaviour undefined if the password is already
+ * in the database */
+uint32_t find_inspos(pwdb_t* db, char* name);
+
 /* add a password to the database
  * this method takes ownership of the password
  * and will free it when necessary 
- * returns 0 if successful, -1 if not */
+ * returns 0 if successful, 
+ * apropriate error code if not */
 int db_add_pw(pwdb_t* db, passw_t* pw);
 
 /* removes the password with the given name
- * and returns 0
- * or returns -1 if not found */
+ * and returns 0, 
+ * apropriate error code if not successful */
 int db_rem_pw(pwdb_t* db, char* name);
 
 /* gets the password with the given name 
