@@ -4,13 +4,16 @@
 #include <libibur/test.h>
 
 extern void password_tests();
+extern void database_tests();
 
 void (*suite[])() = {
-	password_tests
+	password_tests,
+	database_tests
 };
 
 const char* names[] = {
-	"PASSWORDS"
+	"PASSWORDS",
+	"DATABASE"
 };
 
 int main() {

@@ -10,10 +10,10 @@ endif
 
 LIBS=-libcrypt
 
-HEADERS=password.h
-OBJECTS=password.o
+HEADERS=password.h database.h
+OBJECTS=password.o database.o
 
-TEST_OBJECTS=$(OBJECTS) test_suite.o password_test.o
+TEST_OBJECTS=$(OBJECTS) test_suite.o $(OBJECTS:%.o=%_test.o)
 
 .PHONY: clean cleanall remake remaketest test
 
