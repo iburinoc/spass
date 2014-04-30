@@ -1,5 +1,5 @@
 CC=gcc
-DEBUG=0
+DEBUG=1
 ORIGFLAGS= -c -Wall -std=c99
 
 ifeq ($(DEBUG),1)
