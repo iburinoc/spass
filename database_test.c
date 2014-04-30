@@ -40,11 +40,15 @@ void database_search_tests() {
 		free(decpw);
 	}
 	
+	assert_true(db->num == 26, "DATABASE");
+	
 	for(int i = 0; i < 26; i++) {
 		n[0] = (char) (65 + i);
 		
-		//db_rem_pw(db, n);
+		db_rem_pw(db, n);
 	}
+	
+	assert_true(db->num == 0, "DATABASE");
 	
 	free_db(db);
 }

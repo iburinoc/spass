@@ -205,19 +205,18 @@ int db_rem_pw(pwdb_t* db, char* name) {
 
 	/* index of password */
 	uint32_t rmpos = find_pw(db, name);
-	/* pointer to remove position */
-	passw_t** rmpt = db->pws + rmpos;
-	/* password to be removed, stored in case of emergency */
-	passw_t* rmpw  = *rmpt;
+
+	/* password being removed */
+	passw_t* rmpw = db->pws[rmpos];
 
 	/* move the passwords after the removed one to take its place */
-	memmove(rmpt, rmpt + 1, (db->pws + db->num) - (rmpt + 1));
+	memmove(&db->pws[rmpos], &db->pws[rmpos + 1], (db->num - rmpos - 1) * sizeof(passw_t*));
 	/* database could be empty */
 	if((db->pws = realloc(db->pws, (db->num - 1) * sizeof(passw_t*))) == NULL && db->num != 1) {
 		/* could not allocate memory */
 		/* cannot return immediately as memory has already been moved */
-		memmove(rmpt + 1, rmpt, (db->pws + db->num) - (rmpt + 1));
-		*rmpt = rmpw;
+		memmove(&db->pws[rmpos + 1], &db->pws[rmpos], (db->num - rmpos - 1) * sizeof(passw_t*));
+		db->pws[rmpos] = rmpw;
 		
 		/* database has been fixed, return failure */
 		return ALLOC_FAIL;
