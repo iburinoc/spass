@@ -185,7 +185,7 @@ int db_add_pw(pwdb_t* db, passw_t* pw) {
 		return ALLOC_FAIL;
 	}
 	
-	memmove(&db->pws[inspos+1], &db->pws[inspos], ((db->num + 1) - inspos) * sizeof(passw_t*));
+	memmove(&db->pws[inspos+1], &db->pws[inspos], (db->num - inspos) * sizeof(passw_t*));
 
 	/* success! */
 	db->pws[inspos] = pw;
