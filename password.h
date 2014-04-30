@@ -1,6 +1,8 @@
 #ifndef SPASS_PASSWORD_H
 #define SPASS_PASSWORD_H
 
+#define SPASS_PASSWORD_DEBUG
+
 #include <stdint.h>
 
 #include <ibcrypt/aes.h>

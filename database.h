@@ -1,6 +1,8 @@
 #ifndef SPASS_DATABASE_H
 #define SPASS_DATABASE_H
 
+#define SPASS_DATABASE_DEBUG
+
 #include <stdint.h>
 #include <stdlib.h>
 

@@ -9,6 +9,10 @@
 
 #include "password.h"
 
+#ifdef SPASS_PASSWORD_DEBUG
+#include <stdio.h>
+#endif
+
 passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key) {
 	passw_t* pw;
 	if((pw = (passw_t*) malloc(sizeof(passw_t))) == NULL) {
@@ -20,12 +24,12 @@ passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key) {
 	
 	/* name gets terminating byte */
 	uint32_t nlen = strlen(name);
-	if((pw->name = (char*) malloc(nlen + 1)) == NULL) {
+	if((pw->name = malloc(nlen + 1)) == NULL) {
 		errno = ENOMEM;
 		goto err1;
 	}
 	
-	if((pw->pass = (uint8_t*) malloc(plen)) == NULL) {
+	if((pw->pass = malloc(plen)) == NULL) {
 		errno = ENOMEM;
 		goto err1;
 	}
@@ -38,6 +42,13 @@ passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key) {
 	
 	/* encrypt password in ctr mode */
 	encrypt_ctr_AES((uint8_t*) pass, plen, pw->nonce, key, pw->pass);
+	
+#ifdef SPASS_PASSWORD_DEBUG
+	if(pw->name == NULL) {
+		fprintf(stderr, "NAME NULL");
+		exit(-1);
+	}
+#endif
 	
 	/* success! */
 	return pw;
