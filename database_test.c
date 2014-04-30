@@ -29,6 +29,9 @@ void database_search_tests() {
 		n[0] = (char) (65 + i);
 		
 		passw_t* pw = db_get_pw(db, n);
+		if(pw == NULL) {
+			abort();
+		}
 		char* decpw = dec_pw(pw, &key);
 		assert_equals(decpw, password, strlen(password)+1, "DATABASE");
 		
@@ -40,7 +43,7 @@ void database_search_tests() {
 	for(int i = 0; i < 26; i++) {
 		n[0] = (char) (65 + i);
 		
-		db_rem_pw(db, n);
+		//db_rem_pw(db, n);
 	}
 	
 	free_db(db);
