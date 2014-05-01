@@ -4,8 +4,10 @@ ORIGFLAGS= -c -Wall -std=c99
 
 ifeq ($(DEBUG),1)
 	CFLAGS=$(ORIGFLAGS) -g
+	LFLAGS= 
 else
-	CFLAGS=$(ORIGFLAGS) -O4
+	CFLAGS=$(ORIGFLAGS) -O3 -flto
+	LFLAGS=-flto
 endif
 
 LIBS=-libcrypt
@@ -18,7 +20,7 @@ TEST_OBJECTS=$(OBJECTS) test_suite.o $(OBJECTS:%.o=%_test.o)
 .PHONY: clean cleanall remake remaketest test
 
 test: bin $(TEST_OBJECTS)
-	gcc $(TEST_OBJECTS) $(LIBS) -o bin/test
+	gcc $(LFLAGS) $(TEST_OBJECTS) $(LIBS) -o bin/test
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
