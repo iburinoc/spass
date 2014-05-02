@@ -2,27 +2,28 @@ encrypted file format v0x00
 ===========================
 
 The password shall be converted into 2 256 bit keys.
-scrypt will be run using the given parameters to produce 512
-bytes of output.  the first 256 bits are used as a 256-bit AES key
-to encrypt the database and the second 256 bits are used as an HMAC key
+scrypt will be run using the given parameters to produce 768
+bits of output.  the first 256 bits are used as a 256-bit AES key
+to encrypt the database, the second 256 bits are used as an AES key
+to encrypt the passwords, and the third 256 bits are used as an HMAC key
 
 all spass database versions are guaranteed to start with 7 octets of "spass\0\0"
 followed by the version number
 
 offset  length  purpose
-------  ------  -------------------------------------------------
+------  ------  --------------------------------------------------------------------------------
  0       7      magic: "spass\0\0"
- 7       1      format version number (0x00 for now)
+ 7       1      format version number (0x00 for this version)
  8       4      r (big-endian integer; must satisfy r * p < 2^30)
 12       4      p (big-endian integer; must satisfy r * p < 2^30)
 16       1      logN (scrypt parameter)
 17       7      0x00 x 7 for padding
-24      32      salt for scrypt
-56      16      cbc iv
-72       8      big endian integer; length of encrypted blob
-80      16      random pad bytes
+24      32      salt for scrypt (changed at each key change)
+56       8      ctr iv (starts at 1 increments each write, when it gets to 0 force a key change)
+64       8      big endian integer; length of encrypted blob
+72      24      random pad bytes
 96      32      HMAC-SHA256(0 .. 95)
-128      X      data encrypted using AES256-CBC
+128      X      data encrypted using AES256-CTR
 128+X   32      HMAC-SHA256(0 .. 128 + (X-1))
 
 serialized db format
