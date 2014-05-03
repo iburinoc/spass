@@ -12,7 +12,7 @@ typedef struct {
 	uint8_t*    pass;
 	uint32_t    namelen;
 	uint32_t    passlen;
-	uint8_t     nonce[16];
+	uint8_t     iv[16];
 } passw_t;
 
 /* this password should be freed with a call to free_pw and nonce should be random */

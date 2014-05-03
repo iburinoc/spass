@@ -38,9 +38,9 @@ serialized pw format
 ====================
 
 offset  length  purpose
-------  ------  --------------------
+------  ------  ---------------------------------------------------------------------------------
 0        4      name length
 4        4      password length
-8       16      nonce
+8       16      iv
 24      nlen    name
-24+nlen plen    password (encrypted)
+24+nlen plen    password (encrypted aes cbc) (actually plen rounded up to nearest multiple of 16)

@@ -29,7 +29,8 @@ passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key) {
 		goto err1;
 	}
 	
-	if((pw->pass = malloc(plen)) == NULL) {
+	/* round up to nearest multiple of 16 */
+	if((pw->pass = malloc(((plen + 15)/16) * 16)) == NULL) {
 		errno = ENOMEM;
 		goto err1;
 	}
@@ -38,10 +39,11 @@ passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key) {
 	memcpy(pw->name, name, nlen + 1);
 	pw->namelen = nlen;
 	
-	cs_rand(pw->nonce, 16);
+	cs_rand(pw->iv, 16);
 	
-	/* encrypt password in ctr mode */
-	encrypt_ctr_AES((uint8_t*) pass, plen, pw->nonce, key, pw->pass);
+	/* encrypt password in cbc mode */
+	memcpy(pw->pass, pass, plen);
+	encrypt_cbc_AES((uint8_t*) pw->pass, ((plen + 15)/16) * 16, pw->iv, key, pw->pass);
 	
 #ifdef SPASS_PASSWORD_DEBUG
 	if(pw->name == NULL) {
@@ -84,13 +86,13 @@ passw_t* deserialize_pw(uint8_t* stream) {
 	}
 	
 	/* allocate buffer for pass */
-	if((pw->pass = (uint8_t*) malloc(pw->passlen)) == NULL) {
+	if((pw->pass = (uint8_t*) malloc(((pw->passlen+15)/16) * 16)) == NULL) {
 		errno = ENOMEM;
 		goto err1;
 	}
 	
 	/* read nonce */
-	memcpy(pw->nonce, stream, 16);
+	memcpy(pw->iv, stream, 16);
 	stream += 16;
 	
 	/* read name */
@@ -99,7 +101,7 @@ passw_t* deserialize_pw(uint8_t* stream) {
 	stream += pw->namelen;
 	
 	/* read password */
-	memcpy(pw->pass, stream, pw->passlen);
+	memcpy(pw->pass, stream, ((pw->passlen+15)/16) * 16);
 	stream += pw->passlen;
 	
 	/* success! */
@@ -122,7 +124,7 @@ void serialize_pw(passw_t* pw, uint8_t* buf) {
 	buf += 4;
 	
 	/* nonce */
-	memcpy(buf, pw->nonce, 16);
+	memcpy(buf, pw->iv, 16);
 	buf += 16;
 	
 	/* name */
@@ -130,19 +132,19 @@ void serialize_pw(passw_t* pw, uint8_t* buf) {
 	buf += pw->namelen;
 	
 	/* password (encrypted) */
-	memcpy(buf, pw->pass, pw->passlen);
-	buf += pw->passlen;
+	memcpy(buf, pw->pass, ((pw->passlen + 15)/16) * 16);
+	buf += ((pw->passlen + 15)/16) * 16;
 }
 
 char* dec_pw(passw_t* pw, AES_KEY* key) {
 	char* decpw;
-	if((decpw = (char*) malloc(pw->passlen + 1)) == NULL) {
+	if((decpw = (char*) malloc(((pw->passlen+15)/16) * 16)) == NULL) {
 		errno = ENOMEM;
 		goto err0;
 	}
 	
-	decrypt_ctr_AES(pw->pass, pw->passlen, pw->nonce, key, (uint8_t*) decpw);
-		
+	decrypt_cbc_AES(pw->pass, ((pw->passlen+15)/16) * 16, pw->iv, key, (uint8_t*) decpw);
+	decpw[pw->passlen] = '\0';
 	return decpw;
 	
 err0:
@@ -172,5 +174,5 @@ void free_pw(passw_t* pw) {
 /* return the size of this password when serialized */
 uint32_t serial_size_pw(passw_t* pw) {
 	/* sizeof(namelen) + sizeof(passlen) + sizeof(nonce) + len(name) + len(pass) */
-	return sizeof(uint32_t) * 2 + sizeof(uint8_t) * 16 + pw->namelen + pw->passlen;
+	return sizeof(uint32_t) * 2 + sizeof(uint8_t) * 16 + pw->namelen + ((pw->passlen + 15)/16) * 16;
 }
