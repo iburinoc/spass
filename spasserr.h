@@ -6,5 +6,6 @@
 #define PW_EXISTS  2 /* password already exists under this name */
 #define PW_NEXISTS 3 /* password does not exist under this name */
 #define DB_FULL    4 /* no more space in the database for new passwords */
+#define WRITE_ERR  5 /* could not write to file */
 
 #endif
