@@ -43,6 +43,7 @@ passw_t* init_pw(char* name, char* pass, uint32_t plen, AES_KEY* key) {
 	
 	/* encrypt password in cbc mode */
 	memcpy(pw->pass, pass, plen);
+	memset(pw->pass+plen, 0x00, ((plen + 15)/16) * 16 - plen);
 	encrypt_cbc_AES((uint8_t*) pw->pass, ((plen + 15)/16) * 16, pw->iv, key, pw->pass);
 	
 #ifdef SPASS_PASSWORD_DEBUG
