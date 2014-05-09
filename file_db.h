@@ -20,6 +20,6 @@ typedef struct {
 
 int create_header_v00(dbfile_v00_t* db, uint8_t header[V00_HEADSIZE]);
 
-int write_db_v00(int fd, dbfile_v00_t* db);
+int write_db_v00(FILE* out, dbfile_v00_t* dbf);
 
 #endif

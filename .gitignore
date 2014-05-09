@@ -22,6 +22,11 @@
 *.x86_64
 *.hex
 
+*.dSYM
+
 # bin folder
 bin/
+
+# password dbs
+*.spass
 
