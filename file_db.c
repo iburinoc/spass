@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ibcrypt/sha256.h>
-#include <ibcrypt/rand.h>
 #include <ibcrypt/chacha.h>
+#include <ibcrypt/rand.h>
+#include <ibcrypt/scrypt.h>
+#include <ibcrypt/sha256.h>
 
 #include <libibur/endian.h>
+#include <libibur/util.h>
 
 #include "database.h"
 #include "file_db.h"
@@ -13,10 +15,10 @@
 
 static const char* const magic = "spass\0\0";
 
-#define WRITEBLOCK 65536
+#define RWBLOCK 65536
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
-int create_header_v00(dbfile_v00_t* dbf, uint8_t header[V00_HEADSIZE]) {
+static int create_header_v00(dbfile_v00_t* dbf, uint8_t header[V00_HEADSIZE]) {
 	/* offset  length  purpose */
 	
 	/*  0       7      magic: "spass\0\0" */
@@ -94,7 +96,7 @@ int write_db_v00(FILE* out, dbfile_v00_t* dbf)  {
 	
 	offset = 0;
 	while(offset < dbsize) {
-		size_t writenum = min(WRITEBLOCK, dbsize-offset);
+		size_t writenum = min(RWBLOCK, dbsize-offset);
 		if(fwrite(&serial_db[offset], writenum, 1, out) != 1) {
 			if(ferror(out)) {
 				fprintf(stderr, "write error");
@@ -121,4 +123,131 @@ err1:
 err0:
 	/* failed! */
 	return WRITE_ERR;
+}
+
+static int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
+	uint8_t dk[96];
+	
+	int rc = scrypt(pw, pwlen, dbf->salt, 32, (uint64_t)1 << dbf->logN, dbf->r, dbf->p, 96, dk);
+	if(rc != SUCCESS) {
+		return INV_FILE;
+	}
+	
+	memcpy(dbf->ctrkey, &dk[ 0], 32);
+	memcpy(dbf->mackey, &dk[32], 32);
+	memcpy(dbf->paskey, &dk[64], 32);
+	
+	return SUCCESS;
+}
+
+static int verify_header_v00(uint8_t header[V00_HEADSIZE], dbfile_v00_t* dbf) {
+	HMAC_SHA256_CTX ctx;
+	uint8_t mac[32];
+	
+	hmac_sha256_init(&ctx, dbf->mackey, 32);
+	hmac_sha256_update(&ctx, header, 96);
+	hmac_sha256_final(&ctx, mac);
+	
+	if(memcmp_ct(&header[96], mac, 32) != 0) {
+		return INV_FILE;
+	} else {
+		return SUCCESS;
+	}
+}
+
+int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
+	int rc = READ_ERR;
+	
+	uint64_t dbsize;
+	uint64_t offset;
+	HMAC_SHA256_CTX hctx;
+	uint8_t* serial_db;
+	uint8_t header[V00_HEADSIZE];
+	uint8_t macfile[32];
+	uint8_t maccomp[32];
+	if(fread(header, V00_HEADSIZE, 1, in) != 1) {
+		goto err0;
+	}
+	
+	/* offset  length  purpose */
+	
+	/*  0       7      magic: "spass\0\0" */
+	if(memcmp(&header[ 0], magic, 7) != 0) {
+		rc = INV_FILE;
+		goto err0;
+	}
+	
+	/*  7       1      format version number (0x00 for this version) */
+	if(header[ 7] != 0x00) {
+		rc = INV_FILE;
+		goto err0;
+	}
+	
+	/*  8       4      r (big-endian integer; must satisfy r * p < 2^30) */
+	dbf->r = decbe32(&header[ 8]);
+	
+	/* 12       4      p (big-endian integer; must satisfy r * p < 2^30) */
+	dbf->p = decbe32(&header[12]);
+	
+	/* 16       1      logN (scrypt parameter) */
+	dbf->logN = header[16];
+	
+	/* 17       7      0x00 x 7 for padding */
+	
+	/* 24      32      salt for scrypt (the parameter that changes for forced key changes) */
+	memcpy(dbf->salt, &header[24], 32);
+	
+	/* 56       8      ctr iv (starts at 1 increments each write, when it gets to 0 force a key change) */
+	dbf->nonce = decbe64(&header[56]);
+	
+	/* 64       8      big endian integer; length of encrypted blob */
+	dbsize = decbe64(&header[64]);
+	
+	if(create_key_v00(password, plen, dbf) != 0) {
+		rc = INV_FILE;
+		goto err0;
+	}
+	
+	if(verify_header_v00(header, dbf) != 0) {
+		rc = INV_FILE;
+		goto err0;
+	}
+	
+	if((serial_db = malloc(dbsize)) == NULL) {
+		rc = ALLOC_FAIL;
+		goto err0;
+	}
+	
+	hmac_sha256_init(&hctx, dbf->mackey, 32);
+	hmac_sha256_update(&hctx, header, V00_HEADSIZE);
+	
+	offset = 0;
+	while(offset < dbsize) {
+		size_t readnum = min(RWBLOCK, dbsize-offset);
+		if(fread(&serial_db[offset], readnum, 1, in) != 1) {
+			goto err1;
+		}
+		hmac_sha256_update(&hctx, &serial_db[offset], readnum);
+		offset += readnum;
+	}
+	
+	if(fread(macfile, 32, 1, in) != 1) {
+		goto err1;
+	}
+	hmac_sha256_final(&hctx, maccomp);
+	
+	if(memcmp_ct(macfile, maccomp, 32) != 0) {
+		rc = INV_FILE;
+		goto err1;
+	}
+	
+
+err1:
+	memset(dbf->ctrkey, 0, 32);
+	memset(dbf->mackey, 0, 32);
+	memset(dbf->paskey, 0, 32);
+	free(serial_db);
+err0:
+	/* failed! */
+	return rc;
 }

@@ -14,12 +14,13 @@ typedef struct {
 	/* very sensitive... */
 	uint8_t ctrkey[32];
 	uint8_t mackey[32];
+	uint8_t paskey[32];
 } dbfile_v00_t;
 
 #define V00_HEADSIZE 128
 
-int create_header_v00(dbfile_v00_t* db, uint8_t header[V00_HEADSIZE]);
-
 int write_db_v00(FILE* out, dbfile_v00_t* dbf);
+
+int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen);
 
 #endif
