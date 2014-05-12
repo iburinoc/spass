@@ -125,21 +125,6 @@ err0:
 	return WRITE_ERR;
 }
 
-static int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
-	uint8_t dk[96];
-	
-	int rc = scrypt(pw, pwlen, dbf->salt, 32, (uint64_t)1 << dbf->logN, dbf->r, dbf->p, 96, dk);
-	if(rc != SUCCESS) {
-		return INV_FILE;
-	}
-	
-	memcpy(dbf->ctrkey, &dk[ 0], 32);
-	memcpy(dbf->mackey, &dk[32], 32);
-	memcpy(dbf->paskey, &dk[64], 32);
-	
-	return SUCCESS;
-}
-
 static int verify_header_v00(uint8_t header[V00_HEADSIZE], dbfile_v00_t* dbf) {
 	HMAC_SHA256_CTX ctx;
 	uint8_t mac[32];
@@ -161,6 +146,7 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 	uint64_t dbsize;
 	uint64_t offset;
 	HMAC_SHA256_CTX hctx;
+	CHACHA_CTX* cctx;
 	uint8_t* serial_db;
 	uint8_t header[V00_HEADSIZE];
 	uint8_t macfile[32];
@@ -210,12 +196,12 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 	
 	if(verify_header_v00(header, dbf) != 0) {
 		rc = INV_FILE;
-		goto err0;
+		goto err1;
 	}
 	
 	if((serial_db = malloc(dbsize)) == NULL) {
 		rc = ALLOC_FAIL;
-		goto err0;
+		goto err1;
 	}
 	
 	hmac_sha256_init(&hctx, dbf->mackey, 32);
@@ -225,29 +211,64 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 	while(offset < dbsize) {
 		size_t readnum = min(RWBLOCK, dbsize-offset);
 		if(fread(&serial_db[offset], readnum, 1, in) != 1) {
-			goto err1;
+			goto err2;
 		}
 		hmac_sha256_update(&hctx, &serial_db[offset], readnum);
 		offset += readnum;
 	}
 	
 	if(fread(macfile, 32, 1, in) != 1) {
-		goto err1;
+		goto err2;
 	}
+	
 	hmac_sha256_final(&hctx, maccomp);
 	
 	if(memcmp_ct(macfile, maccomp, 32) != 0) {
 		rc = INV_FILE;
-		goto err1;
+		goto err2;
 	}
 	
+	cctx = init_chacha(dbf->ctrkey, 32, dbf->nonce);
+	
+	if(cctx == NULL) {
+		goto err2;
+	}
+	
+	stream_chacha(cctx, serial_db, serial_db, dbsize);
+	free_chacha(cctx);
+	
+	dbf->db = deserialize_db(serial_db);
+	if(dbf->db == NULL) {
+		rc = INV_FILE;
+		goto err2;
+	}
+	
+	return SUCCESS;
 
-err1:
+err2:
+	free(serial_db);
+err1:   /* if we failed we don't want to return the stretched keys */
 	memset(dbf->ctrkey, 0, 32);
 	memset(dbf->mackey, 0, 32);
 	memset(dbf->paskey, 0, 32);
-	free(serial_db);
 err0:
 	/* failed! */
 	return rc;
 }
+
+int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
+	uint8_t dk[96];
+	
+	int rc = scrypt(pw, pwlen, dbf->salt, 32, (uint64_t)1 << dbf->logN, dbf->r, dbf->p, 96, dk);
+	if(rc != SUCCESS) {
+		return INV_FILE;
+	}
+	
+	memcpy(dbf->ctrkey, &dk[ 0], 32);
+	memcpy(dbf->mackey, &dk[32], 32);
+	memcpy(dbf->paskey, &dk[64], 32);
+	
+	return SUCCESS;
+}
+
+

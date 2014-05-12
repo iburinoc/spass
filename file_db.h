@@ -23,4 +23,6 @@ int write_db_v00(FILE* out, dbfile_v00_t* dbf);
 
 int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen);
 
+int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf);
+
 #endif
