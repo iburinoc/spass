@@ -3,7 +3,7 @@ encrypted file format v0x00
 
 The password shall be converted into 2 256 bit keys.
 scrypt will be run using the given parameters to produce 768
-bits of output.  the first 256 bits are used as a 256-bit AES key
+bits of output.  the first 256 bits are used as a 256-bit CHACHA key
 to encrypt the database, the second 256 bits are used as an HMAC key,
 and the third 256 bits are used as an AES key to encrypt the passwords
 
@@ -12,26 +12,26 @@ followed by the version number
 
 offset  length  purpose
 ------  ------  ------------------------------------------------------------------------------------
- 0       7      magic: "spass\0\0"
- 7       1      format version number (0x00 for this version)
- 8       4      r (big-endian integer; must satisfy r * p < 2^30)
-12       4      p (big-endian integer; must satisfy r * p < 2^30)
-16       1      logN (scrypt parameter)
-17       7      0x00 x 7 for padding
-24      32      salt for scrypt (the parameter that changes for forced key changes)
-56       8      ctr iv (BE, starts at 1 increments each write, when it gets to 0 force a key change)
-64       8      big endian integer; length of encrypted blob
-72      24      random pad bytes
-96      32      HMAC-SHA256(0 .. 95)
-128      X      data encrypted using AES256-CTR
-128+X   32      HMAC-SHA256(0 .. 128 + (X-1))
+0x00    0x07    magic: "spass\0\0"
+0x07    0x01    format version number (0x00 for this version)
+0x08    0x04    r (big-endian integer; must satisfy r * p < 2^30)
+0x0c    0x04    p (big-endian integer; must satisfy r * p < 2^30)
+0x10    0x01    logN (scrypt parameter)
+0x11    0x07    0x00 x 7 for padding
+0x18    0x20    salt for scrypt (the parameter that changes for forced key changes)
+0x38    0x08    ctr iv (BE, starts at 1 increments each write, when it gets to 0 force a key change)
+0x40    0x08    big endian integer; length of encrypted blob
+0x48    0x18    random pad bytes
+0x60    0x20    HMAC-SHA256(0 .. 95)
+0x80    X       data encrypted using CHACHA
+0x80+X  0x20    HMAC-SHA256(0 .. 128 + (X-1))
 
 serialized db format
 ====================
 
 offset  length  purpose
 ------  ------  ----------------------------------------
-0        4      number of passwords (big-endian integer)
+0x00    0x04    number of passwords (big-endian integer)
 n        l      password, defined below
 
 serialized pw format
@@ -39,8 +39,8 @@ serialized pw format
 
 offset  length  purpose
 ------  ------  ---------------------------------------------------------------------------------
-0        4      name length
-4        4      password length
-8       16      iv
-24      nlen    name
-24+nlen plen    password (encrypted aes cbc) (actually plen rounded up to nearest multiple of 16)
+0x00    0x04    name length
+0x04    0x04    password length
+0x08    0x10    iv
+0x18    nlen    name
+0x18+x  plen    password (encrypted aes cbc) (actually plen rounded up to nearest multiple of 16)
