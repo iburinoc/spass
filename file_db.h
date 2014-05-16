@@ -3,6 +3,8 @@
 
 #include "database.h"
 
+#define SPASS_FILE_DB_TEST
+
 typedef struct {
 	pwdb_t* db;
 	char* filename;

@@ -189,12 +189,12 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 	/* 64       8      big endian integer; length of encrypted blob */
 	dbsize = decbe64(&header[64]);
 	
-	if(create_key_v00(password, plen, dbf) != 0) {
+	if(create_key_v00(password, plen, dbf) != SUCCESS) {
 		rc = INV_FILE;
 		goto err0;
 	}
 	
-	if(verify_header_v00(header, dbf) != 0) {
+	if(verify_header_v00(header, dbf) != SUCCESS) {
 		rc = INV_FILE;
 		goto err1;
 	}
@@ -237,7 +237,11 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 	stream_chacha(cctx, serial_db, serial_db, dbsize);
 	free_chacha(cctx);
 	
-	dbf->db = deserialize_db(serial_db);
+#ifdef SPASS_FILE_DB_TEST
+	printbuf(serial_db, dbsize);
+#endif
+	
+	dbf->db = deserialize_db(serial_db, dbsize);
 	if(dbf->db == NULL) {
 		rc = INV_FILE;
 		goto err2;
