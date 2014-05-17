@@ -133,10 +133,10 @@ static int verify_header_v00(uint8_t header[V00_HEADSIZE], dbfile_v00_t* dbf) {
 	hmac_sha256_update(&ctx, header, 96);
 	hmac_sha256_final(&ctx, mac);
 	
-	if(memcmp_ct(&header[96], mac, 32) != 0) {
-		return INV_FILE;
-	} else {
+	if(memcmp_ct(&header[96], mac, 32)) {
 		return SUCCESS;
+	} else {
+		return INV_FILE;
 	}
 }
 
@@ -274,5 +274,3 @@ int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
 	
 	return SUCCESS;
 }
-
-
