@@ -110,7 +110,6 @@ int write_db_v00(FILE* out, dbfile_v00_t* dbf)  {
 	hmac_sha256_final(&hctx, hbuf);
 	
 	if(fwrite(hbuf, 32, 1, out) != 1) {
-		fprintf(stderr, "sad\n");
 		goto err1;
 	}
 
@@ -121,6 +120,9 @@ int write_db_v00(FILE* out, dbfile_v00_t* dbf)  {
 err1:
 	free(serial_db);
 err0:
+#ifdef SPASS_FILE_DB_TEST
+abort();
+#endif
 	/* failed! */
 	return WRITE_ERR;
 }
@@ -133,7 +135,7 @@ static int verify_header_v00(uint8_t header[V00_HEADSIZE], dbfile_v00_t* dbf) {
 	hmac_sha256_update(&ctx, header, 96);
 	hmac_sha256_final(&ctx, mac);
 	
-	if(memcmp_ct(&header[96], mac, 32)) {
+	if(memcmp_ct(&header[96], mac, 32) == 0) {
 		return SUCCESS;
 	} else {
 		return INV_FILE;
@@ -256,6 +258,9 @@ err1:   /* if we failed we don't want to return the stretched keys */
 	memset(dbf->mackey, 0, 32);
 	memset(dbf->paskey, 0, 32);
 err0:
+#ifdef SPASS_FILE_DB_TEST
+abort();
+#endif
 	/* failed! */
 	return rc;
 }

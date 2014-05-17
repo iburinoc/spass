@@ -46,6 +46,12 @@ int write_read_test() {
 	char* tmp = dec_pw(db_get_pw(dbf1.db, "name0"), &pwkey);
 	assert_equals(tmp, "password0", 9, "FILE DB");
 	free(tmp);
+	tmp = dec_pw(db_get_pw(dbf1.db, "name2"), &pwkey);
+	assert_equals(tmp, "password2", 9, "FILE DB");
+	free(tmp);
+	tmp = dec_pw(db_get_pw(dbf1.db, "name1"), &pwkey);
+	assert_equals(tmp, "password1", 9, "FILE DB");
+	free(tmp);
 	
 	return 0;
 }
