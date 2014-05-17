@@ -30,3 +30,6 @@ bin/
 # password dbs
 *.spass
 
+# vim lock
+*.swp
+
