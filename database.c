@@ -9,6 +9,10 @@
 #include "password.h"
 #include "spasserr.h"
 
+#ifdef SPASS_DATABASE_DEBUG
+#include <stdio.h>
+#endif
+
 /* initialize a new database */
 pwdb_t* init_db() {
 	pwdb_t* db;
@@ -32,13 +36,15 @@ err0:
 pwdb_t* deserialize_db(uint8_t* buf, size_t len) {
 	pwdb_t* db;
 	uint32_t index = 0;
-	
+	size_t pos = 0;
+
 	if((db = malloc(sizeof(pwdb_t))) == NULL) {
 		errno = ENOMEM;
 		goto err0;
 	}
 
 	db->num = decbe32(buf);
+
 	if((db->pws = malloc(sizeof(passw_t*) * db->num)) == NULL) {
 		errno = ENOMEM;
 		goto err1;
@@ -46,8 +52,8 @@ pwdb_t* deserialize_db(uint8_t* buf, size_t len) {
 	memset(db->pws, 0, sizeof(passw_t*) * db->num);
 	
 	buf += 4;
-	len -= 4;
-	while(len > 0 && index < db->num) {
+	pos += 4;
+	while(pos < len && index < db->num) {
 		db->pws[index] = deserialize_pw(buf);
 		if(db->pws[index] == NULL) {
 			goto err2;
@@ -55,12 +61,12 @@ pwdb_t* deserialize_db(uint8_t* buf, size_t len) {
 		
 		size_t sspw = serial_size_pw(db->pws[index]);
 		buf += sspw;
-		len -= sspw;
+		pos += sspw;
 		index++;
 	}
 	
 	/* buffer was not proper length */
-	if(len != 0 || index != db->num) {
+	if(pos != len || index != db->num) {
 		errno = EINVAL;
 		goto err2;
 	}
@@ -133,6 +139,13 @@ uint32_t inspos_pw(pwdb_t* db, char* name) {
 	if(db->num == 0) {
 		return 0;
 	}
+	if(db->num == 1) {
+		if(strcmp(name, db->pws[0]->name) <= 0) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
 	uint32_t min = 0;
 	uint32_t max = db->num;
 	while(1) {
@@ -142,7 +155,7 @@ uint32_t inspos_pw(pwdb_t* db, char* name) {
 			return mid;
 		} else {
 			if(mid == min) {
-				return mid + 1;
+				return mid + (cmp < 0 ? 0 : 1);
 			}
 			if(cmp < 0) {
 				max = mid;
@@ -190,6 +203,11 @@ int db_add_pw(pwdb_t* db, passw_t* pw) {
 	/* success! */
 	db->pws[inspos] = pw;
 	db->num++;
+
+	if(db->num > 1 && strcmp(db->pws[0]->name, db->pws[1]->name) > 0) {
+		printf("Error: First password does not conform");
+		abort();
+	}
 	
 	return SUCCESS;
 }

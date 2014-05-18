@@ -135,15 +135,18 @@ void serialize_pw(passw_t* pw, uint8_t* buf) {
 	/* password (encrypted) */
 	memcpy(buf, pw->pass, ((pw->passlen + 15)/16) * 16);
 	buf += ((pw->passlen + 15)/16) * 16;
+
+	if(pw->passlen == 0) {
+		abort();
+	}
 }
 
 char* dec_pw(passw_t* pw, AES_KEY* key) {
 	char* decpw;
-	if((decpw = (char*) malloc(((pw->passlen+15)/16) * 16)) == NULL) {
+	if((decpw = (char*) malloc(((pw->passlen+15)/16) * 16 + 1)) == NULL) {
 		errno = ENOMEM;
 		goto err0;
 	}
-	
 	decrypt_cbc_AES(pw->pass, ((pw->passlen+15)/16) * 16, pw->iv, key, (uint8_t*) decpw);
 	decpw[pw->passlen] = '\0';
 	return decpw;

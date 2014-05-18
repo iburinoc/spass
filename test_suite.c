@@ -5,15 +5,18 @@
 
 extern void password_tests();
 extern void database_tests();
+extern void file_db_tests();
 
 void (*suite[])() = {
 	password_tests,
-	database_tests
+	database_tests,
+	file_db_tests
 };
 
 const char* names[] = {
 	"PASSWORDS",
-	"DATABASE"
+	"DATABASE",
+	"FILE DB"
 };
 
 int main() {
@@ -26,3 +29,4 @@ int main() {
 			names[i], seconds);
 	}
 }
+

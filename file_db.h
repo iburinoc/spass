@@ -19,7 +19,11 @@ typedef struct {
 	uint8_t paskey[32];
 } dbfile_v00_t;
 
+typedef dbfile_v00_t dbfile_t;
+
 #define V00_HEADSIZE 128
+
+int init_dflt_dbf_v00(dbfile_v00_t* dbf);
 
 int write_db_v00(FILE* out, dbfile_v00_t* dbf);
 

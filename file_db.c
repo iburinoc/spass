@@ -18,6 +18,15 @@ static const char* const magic = "spass\0\0";
 #define RWBLOCK 65536
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
+int init_dflt_dbf_v00(dbfile_v00_t* dbf) {
+	dbf->nonce = 1;
+	dbf->r = 8;
+	dbf->p = 1;
+	dbf->logN = 16;
+	dbf->db = init_db();
+	return cs_rand(dbf->salt, 32);
+}
+
 static int create_header_v00(dbfile_v00_t* dbf, uint8_t header[V00_HEADSIZE]) {
 	/* offset  length  purpose */
 	
@@ -64,11 +73,9 @@ int write_db_v00(FILE* out, dbfile_v00_t* dbf)  {
 	HMAC_SHA256_CTX hctx;
 	CHACHA_CTX* cctx;
 	uint64_t dbsize = serial_size_db(dbf->db);
-	uint64_t filesize = 128 + dbsize + 32;
 	uint8_t header[V00_HEADSIZE];
 	uint8_t hbuf[32];
 	
-	size_t readlen;
 	size_t offset;
 	
 	uint8_t* serial_db = malloc(dbsize);

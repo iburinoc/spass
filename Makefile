@@ -12,8 +12,8 @@ endif
 
 LIBS=-libcrypt
 
-HEADERS=password.h database.h
-OBJECTS=password.o database.o
+HEADERS=password.h database.h file_db.h
+OBJECTS=password.o database.o file_db.o
 
 TEST_OBJECTS=$(OBJECTS) test_suite.o $(OBJECTS:%.o=%_test.o)
 
