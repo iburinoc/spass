@@ -255,6 +255,8 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 		rc = INV_FILE;
 		goto err2;
 	}
+
+	free(serial_db);
 	
 	return SUCCESS;
 
@@ -266,7 +268,7 @@ err1:   /* if we failed we don't want to return the stretched keys */
 	memset(dbf->paskey, 0, 32);
 err0:
 #ifdef SPASS_FILE_DB_TEST
-abort();
+	abort();
 #endif
 	/* failed! */
 	return rc;
@@ -286,3 +288,4 @@ int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
 	
 	return SUCCESS;
 }
+

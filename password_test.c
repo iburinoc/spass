@@ -38,7 +38,7 @@ static void serialize_tests() {
 		free_pw(pwstr);
 		free(pw);
 		free(buf);
-		free(npw);
+		free_pw(npw);
 		free(p1);
 		free(p2);
 	}
