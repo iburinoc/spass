@@ -45,7 +45,8 @@ void database_search_tests() {
 	for(int i = 0; i < 26; i++) {
 		n[0] = (char) (65 + i);
 		
-		db_rem_pw(db, n);
+		assert_eq_int(db_rem_pw(db, n), SUCCESS, "DATABASE REMOVE");
+		assert_eq_int(db_rem_pw(db, n), PW_NEXISTS, "DATABASE REMOVE");
 	}
 	
 	assert_true(db->num == 0, "DATABASE");
@@ -56,3 +57,4 @@ void database_search_tests() {
 void database_tests() {
 	database_search_tests();
 }
+

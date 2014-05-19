@@ -177,7 +177,7 @@ static int pw_exists(pwdb_t* db, char* name) {
 /* add a password to the database
  * this method takes ownership of the password
  * and will free it when necessary 
- * returns 0 if successful, -1 if not */
+ * returns 0 if successful, appropriate error if not */
 int db_add_pw(pwdb_t* db, passw_t* pw) {
 	if(pw_exists(db, pw->name)) {
 		/* password already exists under this name */
@@ -214,7 +214,7 @@ int db_add_pw(pwdb_t* db, passw_t* pw) {
 
 /* removes the password with the given name
  * and returns 0
- * or returns -1 if not found */
+ * or returns appropriate error if not found */
 int db_rem_pw(pwdb_t* db, char* name) {
 	if(!pw_exists(db, name)) {
 		/* password does not exist under this name */
