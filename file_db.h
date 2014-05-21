@@ -1,6 +1,8 @@
 #ifndef SPASS_FILE_OP_H
 #define SPASS_FILE_OP_H
 
+#include <stdio.h>
+
 #include "database.h"
 
 //#define SPASS_FILE_DB_TEST

@@ -193,11 +193,14 @@ int db_add_pw(pwdb_t* db, passw_t* pw) {
 	uint32_t inspos = inspos_pw(db, pw->name);
 	
 	/* make the space for the password */
-	if((db->pws = realloc(db->pws, (db->num + 1) * sizeof(passw_t*))) == NULL) {
+	void* tmp;
+	if((tmp = realloc(db->pws, (db->num + 1) * sizeof(passw_t*))) == NULL) {
 		/* could not allocate memory */
 		return ALLOC_FAIL;
 	}
 	
+	db->pws = tmp; /* avoid memory leak */
+
 	memmove(&db->pws[inspos+1], &db->pws[inspos], (db->num - inspos) * sizeof(passw_t*));
 
 	/* success! */
@@ -230,7 +233,8 @@ int db_rem_pw(pwdb_t* db, char* name) {
 	/* move the passwords after the removed one to take its place */
 	memmove(&db->pws[rmpos], &db->pws[rmpos + 1], (db->num - rmpos - 1) * sizeof(passw_t*));
 	/* database could be empty */
-	if((db->pws = realloc(db->pws, (db->num - 1) * sizeof(passw_t*))) == NULL && db->num != 1) {
+	void* tmp;
+	if((tmp = realloc(db->pws, (db->num - 1) * sizeof(passw_t*))) == NULL && db->num != 1) {
 		/* could not allocate memory */
 		/* cannot return immediately as memory has already been moved */
 		memmove(&db->pws[rmpos + 1], &db->pws[rmpos], (db->num - rmpos - 1) * sizeof(passw_t*));
@@ -239,6 +243,8 @@ int db_rem_pw(pwdb_t* db, char* name) {
 		/* database has been fixed, return failure */
 		return ALLOC_FAIL;
 	}
+
+	db->pws = tmp;
 
 	/* free password being removed as we own it,
 	 * password should be copied if someone wants to keep it */

@@ -54,6 +54,9 @@ int write_read_test() {
 	free(tmp);
 
 	assert_eq_uint(dbf1.db->num, dbf.db->num, "FILE DB NUM");
+
+	free_db(dbf.db);
+	free_db(dbf1.db);
 	
 	remove(fname);
 
