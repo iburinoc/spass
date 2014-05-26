@@ -9,5 +9,7 @@
 #define WRITE_ERR  5 /* could not write to file */
 #define READ_ERR   6 /* could not read from file */
 #define INV_FILE   7 /* file is not valid scrypt format */
+#define NO_CFG     8 /* no config file found */
+#define INV_CFG    9 /* invalid config file/struct */
 
 #endif
