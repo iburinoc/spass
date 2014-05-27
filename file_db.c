@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #include <ibcrypt/chacha.h>
 #include <ibcrypt/rand.h>
@@ -19,12 +20,16 @@ static const char* const magic = "spass\0\0";
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
 int init_dflt_dbf_v00(dbfile_v00_t* dbf) {
-	dbf->nonce = 1;
+	dbf->nonce = 0;
 	dbf->r = 8;
 	dbf->p = 1;
 	dbf->logN = 16;
 	dbf->db = init_db();
-	return cs_rand(dbf->salt, 32);
+	dbf->modified = 1;
+	if(cs_rand(dbf->salt, 32) != 0) {
+		return CRYPT_ERR;
+	}
+	return SUCCESS;
 }
 
 static int create_header_v00(dbfile_v00_t* dbf, uint8_t header[V00_HEADSIZE]) {
@@ -256,6 +261,8 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 		goto err2;
 	}
 
+	dbf->modified = 0;
+
 	free(serial_db);
 	
 	return SUCCESS;
@@ -279,7 +286,11 @@ int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
 	
 	int rc = scrypt(pw, pwlen, dbf->salt, 32, (uint64_t)1 << dbf->logN, dbf->r, dbf->p, 96, dk);
 	if(rc != SUCCESS) {
-		return INV_FILE;
+		if(errno == EINVAL) {
+			return INV_FILE;
+		} else {
+			return ALLOC_FAIL;
+		}
 	}
 	
 	memcpy(dbf->ctrkey, &dk[ 0], 32);
@@ -287,5 +298,81 @@ int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
 	memcpy(dbf->paskey, &dk[64], 32);
 	
 	return SUCCESS;
+}
+
+int resalt_dbf_v00(dbfile_v00_t* dbf, char* password) {
+	dbfile_v00_t cpy;
+	AES_KEY okey, nkey;
+	int rc;
+	uint32_t i;
+
+	/* 256 is passed as constant so this call cannot fail */
+	create_key_AES(dbf->paskey, 256, &okey);
+
+	memcpy(&cpy, dbf, sizeof(dbfile_v00_t));
+
+	if(cs_rand(cpy.salt, 32) != 0) {
+		rc = CRYPT_ERR;
+		goto err;
+	}
+	rc = create_key_v00(password, strlen(password), &cpy);
+	if(rc != SUCCESS) {
+		goto err;
+	}
+
+	create_key_AES(cpy.paskey, 256, &nkey);
+
+	cpy.db = init_db();
+	if(cpy.db == NULL) {
+		rc = ALLOC_FAIL;
+		goto err;
+	}
+
+	for(i = 0; i < dbf->db->num; i++) {
+		passw_t* cpw = dbf->db->pws[i];
+		char* pw = dec_pw(cpw, &okey);
+		if(pw == NULL) {
+			rc = ALLOC_FAIL;
+			goto err;
+		}
+
+		passw_t* npw = init_pw(cpw->name, pw, cpw->passlen, &nkey);
+		rc = db_add_pw(cpy.db, npw);
+		if(rc != SUCCESS) {
+			goto err;
+		}
+
+		memset(pw, 0, cpw->passlen);
+		free(pw);
+	}
+
+	free_db(dbf->db);
+	memcpy(dbf, &cpy, sizeof(dbfile_v00_t));
+	memset(&cpy, 0, sizeof(dbfile_v00_t));
+
+	memset(&okey, 0, sizeof(AES_KEY));
+	memset(&nkey, 0, sizeof(AES_KEY));
+
+	/* restart the counter */
+	dbf->nonce = 1;
+
+	return SUCCESS;
+
+err:
+	memset(&okey, 0, sizeof(AES_KEY));
+	memset(&nkey, 0, sizeof(AES_KEY));
+	if(cpy.db != NULL && cpy.db != dbf->db) {
+		free_db(cpy.db);
+	}
+
+	memset(&cpy, 0, sizeof(dbfile_v00_t));
+
+	return rc;
+}
+
+void clear_dbf_v00(dbfile_v00_t* dbf) {
+	free_db(dbf->db);
+
+	memset(dbf, 0, sizeof(dbfile_v00_t));
 }
 

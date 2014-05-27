@@ -58,30 +58,9 @@ int load_cfg() {
 			return NO_CFG;
 		}
 	}
-
-	/*int size = 256;
-	char* in = 0;
-	do {
-		in = realloc(in, size);
-		if(in == NULL) {
-			fclose(cfile);
-			return ALLOC_FAIL;
-		}
-
-		if(fgets(in + size - 256, 256, cfile) == 0) {
-			free(in);
-			fclose(cfile);
-			return READ_ERR;
-		}
-	} while(in[strlen(in)-1] != '\n');
-
-	in[strlen(in)-1] = '\0';
-	*/
 	char* in = 0;
 	size_t n = 0;
 	size_t nread = getline(&in, &n, cfile);
-
-//	printf("%s\n%d\n", in, nread);
 
 	if(nread < 10 || strncmp("DATABASE=", in, 9) != 0) {
 		free(expath);
@@ -144,8 +123,24 @@ err:
 	return WRITE_ERR;
 }
 
-dbfile_t* load_database(char* password) {
-	return 0;
+/* the cfg must already be set */
+int load_database(dbfile_t* dbf, char* password) {
+	FILE* dbfile;
+
+	if(dbf == NULL) {
+		return 0;
+	}
+
+	if((dbfile = fopen(cfg.dbfname, "rb")) == NULL) {
+		if(errno == ENOENT) {
+			printf("No database file found, creating empty one.");
+			return init_dflt_dbf_v00(dbf);
+		} else {
+			return READ_ERR;
+		}
+	}
+
+	return read_db_v00(dbfile, dbf, password, strlen(password));
 }
 
 char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
@@ -185,7 +180,7 @@ tryagain:
 	read = 0;
 	if((read = getline(&pw, &read, in)) == -1) {
 		free(pw);
-		goto err1;
+		goto err0;
 	}
 	/* remove the new line */
 	pw[read-1] = '\0';
@@ -207,6 +202,8 @@ tryagain:
 			}
 			free(pw);
 			free(confpw);
+			pw = 0;
+			confpw = 0;
 			goto tryagain;
 		}
 	}

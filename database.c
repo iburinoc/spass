@@ -311,3 +311,4 @@ uint64_t serial_size_db(pwdb_t* db) {
 	
 	return size;
 }
+
