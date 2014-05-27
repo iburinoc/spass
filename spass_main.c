@@ -119,7 +119,10 @@ int main(int argv, char** argc) {
 	}
 
 	/* begin operation */
-	load_database(&dbf, pw);	
+	rc = load_database(&dbf, pw);	
+	if(rc != SUCCESS) {
+		goto err;
+	}
 
 	(*cmd)(0, argv-1, argc+1);
 
@@ -148,7 +151,7 @@ err:
 	case DB_FULL:    puts("The database is full.")                                               ; break;
 	case WRITE_ERR:  puts("Could not write to file.  Is the given address valid?.")              ; break;
 	case READ_ERR:   puts("Could not read database/config from file.  Is the listed file valid?"); break;
-	case INV_FILE:   puts("Database file was not of the proper format.")                         ; break;
+	case INV_FILE:   puts("Database file was not properly formatted or the password was wrong.") ; break;
 	case NO_CFG:     puts("No config file was found at $HOME/.spass.conf.")                      ; break;
 	case INV_CFG:    puts("Invalid config file, fix it or delete it to regenerate.")             ; break; 
 	case IO_ERR:     puts("There was an error using stdin/out.")                                 ; break;

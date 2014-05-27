@@ -27,7 +27,7 @@ typedef dbfile_v00_t dbfile_t;
 
 #define V00_HEADSIZE 128
 
-int init_dflt_dbf_v00(dbfile_v00_t* dbf);
+int init_dflt_dbf_v00(dbfile_v00_t* dbf, char* password);
 
 int write_db_v00(FILE* out, dbfile_v00_t* dbf);
 

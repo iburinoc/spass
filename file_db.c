@@ -19,7 +19,7 @@ static const char* const magic = "spass\0\0";
 #define RWBLOCK 65536
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
-int init_dflt_dbf_v00(dbfile_v00_t* dbf) {
+int init_dflt_dbf_v00(dbfile_v00_t* dbf, char* password) {
 	dbf->nonce = 0;
 	dbf->r = 8;
 	dbf->p = 1;
@@ -28,6 +28,10 @@ int init_dflt_dbf_v00(dbfile_v00_t* dbf) {
 	dbf->modified = 1;
 	if(cs_rand(dbf->salt, 32) != 0) {
 		return CRYPT_ERR;
+	}
+	int rc;
+	if((rc = create_key_v00(password, strlen(password), dbf)) != SUCCESS) {
+		return rc;
 	}
 	return SUCCESS;
 }
@@ -250,11 +254,13 @@ int read_db_v00(FILE* in, dbfile_v00_t* dbf, char* password, uint32_t plen) {
 	
 	stream_chacha(cctx, serial_db, serial_db, dbsize);
 	free_chacha(cctx);
-	
+
+	cctx = 0;
+
 #ifdef SPASS_FILE_DB_TEST
 	printbuf(serial_db, dbsize);
 #endif
-	
+
 	dbf->db = deserialize_db(serial_db, dbsize);
 	if(dbf->db == NULL) {
 		rc = INV_FILE;
@@ -283,7 +289,7 @@ err0:
 
 int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
 	uint8_t dk[96];
-	
+
 	int rc = scrypt(pw, pwlen, dbf->salt, 32, (uint64_t)1 << dbf->logN, dbf->r, dbf->p, 96, dk);
 	if(rc != SUCCESS) {
 		if(errno == EINVAL) {
@@ -292,11 +298,11 @@ int create_key_v00(char* pw, uint32_t pwlen, dbfile_v00_t* dbf) {
 			return ALLOC_FAIL;
 		}
 	}
-	
+
 	memcpy(dbf->ctrkey, &dk[ 0], 32);
 	memcpy(dbf->mackey, &dk[32], 32);
 	memcpy(dbf->paskey, &dk[64], 32);
-	
+
 	return SUCCESS;
 }
 
@@ -314,8 +320,8 @@ int resalt_dbf_v00(dbfile_v00_t* dbf, char* password) {
 	if(cs_rand(cpy.salt, 32) != 0) {
 		rc = CRYPT_ERR;
 		goto err;
-	}
-	rc = create_key_v00(password, strlen(password), &cpy);
+	}	
+	create_key_v00(password, strlen(password), &cpy);
 	if(rc != SUCCESS) {
 		goto err;
 	}
@@ -371,7 +377,13 @@ err:
 }
 
 void clear_dbf_v00(dbfile_v00_t* dbf) {
-	free_db(dbf->db);
+	if(dbf == 0) {
+		return;
+	}
+
+	if(dbf->db != 0) {
+		free_db(dbf->db);
+	}
 
 	memset(dbf, 0, sizeof(dbfile_v00_t));
 }

@@ -133,8 +133,8 @@ int load_database(dbfile_t* dbf, char* password) {
 
 	if((dbfile = fopen(cfg.dbfname, "rb")) == NULL) {
 		if(errno == ENOENT) {
-			printf("No database file found, creating empty one.");
-			return init_dflt_dbf_v00(dbf);
+			puts("No database file found, creating empty one.");
+			return init_dflt_dbf_v00(dbf, password);
 		} else {
 			return READ_ERR;
 		}
