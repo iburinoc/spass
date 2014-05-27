@@ -54,6 +54,8 @@ int main(int argv, char** argc) {
 	char* pw = spass_getpass("Password", "Confirm password", 1);
 	printf("%s\n", pw);
 
+	free(pw);
+
 	(*cmd)(0, argv-1, argc+1);
 	
 	return 0;

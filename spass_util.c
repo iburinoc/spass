@@ -148,43 +148,6 @@ dbfile_t* load_database(char* password) {
 	return 0;
 }
 
-/*
-char* spass_getpass(int confirm) {
-	char* pw = 0;
-	char* confpw = 0;
-
-	int i = 0;
-	while(i < 5) {
-		pw = strdup(getpass("Password: "));
-
-		printf("p1: %s\n", pw);
-
-		if(confirm) {
-			printf("p1: %s\n", pw);
-			confpw = getpass("Confirm Password: ");
-			printf("p2: %s\n", confpw);
-			printf("p1: %s\n", pw);
-			if(strcmp(pw, confpw) == 0) {
-				printf("strings %s and %s equal\n", pw, confpw);
-				//free(confpw);
-				return pw;
-			}
-		} else {
-			return pw;
-		}
-
-		printf("Passwords did not match, try again\n");
-		free(pw);
-		free(confpw);
-		i++;
-	}
-
-	printf("Too many attempts\n");
-	
-	return NULL;
-}
-*/
-
 char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
 	FILE* in;
 	char *pw;
@@ -242,6 +205,8 @@ tryagain:
 			if(tty) {
 				printf("Passwords don't match, please try again\n");
 			}
+			free(pw);
+			free(confpw);
 			goto tryagain;
 		}
 	}
@@ -252,6 +217,7 @@ tryagain:
 		if(tcsetattr(fileno(in), TCSANOW, &term_old)) {
 			goto err1;
 		}
+		fclose(in);
 	}
 
 	free(confpw);
