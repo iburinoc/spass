@@ -140,7 +140,11 @@ int load_database(dbfile_t* dbf, char* password) {
 		}
 	}
 
-	return read_db_v00(dbfile, dbf, password, strlen(password));
+	int rc = read_db_v00(dbfile, dbf, password, strlen(password));
+
+	fclose(dbfile);
+
+	return rc;
 }
 
 char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
@@ -202,8 +206,6 @@ tryagain:
 			}
 			free(pw);
 			free(confpw);
-			pw = 0;
-			confpw = 0;
 			goto tryagain;
 		}
 	}

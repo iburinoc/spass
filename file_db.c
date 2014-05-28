@@ -321,7 +321,7 @@ int resalt_dbf_v00(dbfile_v00_t* dbf, char* password) {
 		rc = CRYPT_ERR;
 		goto err;
 	}	
-	create_key_v00(password, strlen(password), &cpy);
+	rc = create_key_v00(password, strlen(password), &cpy);
 	if(rc != SUCCESS) {
 		goto err;
 	}
