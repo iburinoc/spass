@@ -23,9 +23,12 @@ int load_cfg();
 /* write the config in cfg back to the config file */
 int write_cfg();
 
-int load_database(dbfile_t* dbf, char* password);
+int load_database(dbfile_t* dbf);
+
+int write_database(dbfile_t* dbf);
 
 char* spass_getpass(const char* prompt, const char* confprompt, int usetty); 
 
-#endif
+void zfree(void* p, size_t s);
 
+#endif

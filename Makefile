@@ -1,5 +1,5 @@
 CC=gcc
-DEBUG=1
+DEBUG=0
 ORIGFLAGS= -c -Wall -std=c99
 
 ifeq ($(DEBUG),1)
@@ -15,9 +15,14 @@ LIBS=-libcrypt
 HEADERS=password.h database.h file_db.h
 OBJECTS=password.o database.o file_db.o
 
+MAIN_OBJECTS=$(OBJECTS) spass_main.o spass_util.o builtin.o
+
 TEST_OBJECTS=$(OBJECTS) test_suite.o $(OBJECTS:%.o=%_test.o)
 
 .PHONY: clean cleanall remake remaketest test
+
+all: bin $(MAIN_OBJECTS)
+	gcc $(LFLAGS) $(MAIN_OBJECTS) $(LIBS) -o bin/spass
 
 test: bin $(TEST_OBJECTS)
 	gcc $(LFLAGS) $(TEST_OBJECTS) $(LIBS) -o bin/test
@@ -34,6 +39,6 @@ clean:
 cleanall: clean
 	rm -rf bin
 
-remake: clean
+remake: clean all
 
 remaketest: clean test

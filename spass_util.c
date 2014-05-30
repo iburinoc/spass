@@ -124,7 +124,7 @@ err:
 }
 
 /* the cfg must already be set */
-int load_database(dbfile_t* dbf, char* password) {
+int load_database(dbfile_t* dbf) {
 	FILE* dbfile;
 
 	if(dbf == NULL) {
@@ -134,16 +134,43 @@ int load_database(dbfile_t* dbf, char* password) {
 	if((dbfile = fopen(cfg.dbfname, "rb")) == NULL) {
 		if(errno == ENOENT) {
 			puts("No database file found, creating empty one.");
+			char* password = spass_getpass("Password", "Confirm password", 1);
 			return init_dflt_dbf_v00(dbf, password);
 		} else {
 			return READ_ERR;
 		}
 	}
 
+	char* password = spass_getpass("Password", NULL, 1);
 	int rc = read_db_v00(dbfile, dbf, password, strlen(password));
 
 	fclose(dbfile);
 
+	return rc;
+}
+
+int write_database(dbfile_t* dbf) {
+	/* can't rewrite with same nonce */
+	dbf->nonce++;
+
+	if(dbf->nonce == 0) {
+		printf("Database has been written 2^64-1 times, it must be resalted");
+		char* password = spass_getpass("Password", "Confirm password", 1);
+		if(password == NULL) {
+			return IO_ERR;
+		}
+		resalt_dbf_v00(dbf, password);
+		zfree(password, strlen(password));
+	}
+
+	FILE* out;
+	if((out = fopen(cfg.dbfname, "wb")) == NULL) {
+		return WRITE_ERR;
+	}
+
+	int rc = write_db_v00(out, dbf);
+
+	fclose(out);
 	return rc;
 }
 
@@ -183,7 +210,7 @@ tryagain:
 
 	read = 0;
 	if((read = getline(&pw, &read, in)) == -1) {
-		free(pw);
+		zfree(pw, strlen(pw));
 		goto err0;
 	}
 	/* remove the new line */
@@ -204,8 +231,8 @@ tryagain:
 			if(tty) {
 				printf("Passwords don't match, please try again\n");
 			}
-			free(pw);
-			free(confpw);
+			zfree(pw, strlen(pw));
+			zfree(confpw, strlen(confpw));
 			goto tryagain;
 		}
 	}
@@ -219,13 +246,17 @@ tryagain:
 		fclose(in);
 	}
 
-	free(confpw);
+	if(confprompt != NULL) {
+		zfree(confpw, strlen(confpw));
+	}
 
 	return pw;
 
 err1:
-	free(pw);
-	free(confpw);
+	zfree(pw, strlen(pw));
+	if(confprompt != NULL) {
+		zfree(confpw, strlen(confpw));
+	}
 err0:
 	if(tty) {
 		fclose(in);
@@ -234,3 +265,7 @@ err0:
 	return 0;
 }
 
+void zfree(void* p, size_t s) {
+	memset(p, 0, s);
+	free(p);
+}

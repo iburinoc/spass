@@ -27,7 +27,7 @@ static struct option gen_options[] = {
 static char* gen_soptions = "h";
 
 static void usage_add() {
-	puts("usage: spass add [<args>] <name>");
+	puts("add usage: spass add [<args>] <name>");
 }
 
 static void help_add() {
@@ -39,7 +39,8 @@ static void help_add() {
 }
 
 int add(dbfile_t* dbf, int argc, char** argv) {
-	int c;
+	int c = 0;
+	AES_KEY k;
 	while(c != -1) {
 		int option_index;
 		
@@ -54,8 +55,24 @@ int add(dbfile_t* dbf, int argc, char** argv) {
 		}
 	}
 
+	if(optind >= argc) {
+		usage_add();
+		return 0;
+	}
+
 	char* name = argv[optind];
-	puts(name);
+	char* password = spass_getpass("Password to store", NULL, 1);
+
+	if(password == NULL) {
+		return IO_ERR;
+	}
+
+	create_key_AES(dbf->paskey, 256, &k);
+	passw_t* pw = init_pw(name, password, strlen(password), &k);
+
+	memset(&k, 0, sizeof(AES_KEY));
+
+	db_add_pw(dbf.db, pw);
 
 	return 0;
 }

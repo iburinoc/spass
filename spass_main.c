@@ -17,16 +17,16 @@ static struct cmds builtins[] = {
 	{ &gen, "gen", "generate a new random password and insert it in the database" }
 };
 
-static void usage() {
-	puts("usage: spass <command> [<args>]");
-}
-
 static void cmd_unfound() {
 	int i;
-	puts("command not found, did you mean one of these?");
+	puts("Commands:");
 	for(i = 0; i < sizeof(builtins)/sizeof(*builtins); i++) {
 		printf("%s: %s\n", builtins[i].name, builtins[i].desc);
 	}
+}
+
+static void usage() {
+	puts("usage: spass <command> [<args>]");
 }
 
 static int create_config() {
@@ -61,25 +61,6 @@ err:
 	return IO_ERR;
 }
 
-static int writedbf(dbfile_t* dbf, char* password) {
-	/* can't rewrite with same nonce */
-	dbf->nonce++;
-
-	if(dbf->nonce == 0) {
-		resalt_dbf_v00(dbf, password);
-	}
-
-	FILE* out;
-	if((out = fopen(cfg.dbfname, "wb")) == NULL) {
-		return WRITE_ERR;
-	}
-
-	int rc = write_db_v00(out, dbf);
-
-	fclose(out);
-	return rc;
-}
-
 int main(int argv, char** argc) {
 	if(argv < 2) {
 		usage();
@@ -89,17 +70,6 @@ int main(int argv, char** argc) {
 	int (*cmd)(dbfile_t*, int, char**) = 0;
 	int i, rc;
 	dbfile_t dbf;
-
-	for(i = 0; i < sizeof(builtins)/sizeof(*builtins); i++) {
-		if(strcmp(argc[1], builtins[i].name) == 0) {
-			cmd = builtins[i].fun;
-		}
-	}
-
-	if(cmd == 0) {
-		cmd_unfound();
-		return -1;
-	}
 
 	rc = load_cfg();
 	if(rc != SUCCESS && rc != NO_CFG) {
@@ -112,14 +82,18 @@ int main(int argv, char** argc) {
 		}
 	}
 
-	char* pw = spass_getpass("Password", "Confirm password", 1);
+	for(i = 0; i < sizeof(builtins)/sizeof(*builtins); i++) {
+		if(strcmp(argc[1], builtins[i].name) == 0) {
+			cmd = builtins[i].fun;
+		}
+	}
 
-	if(pw == NULL) {
+	if(cmd == 0) {
+		cmd_unfound();
 		return -1;
 	}
 
-	/* begin operation */
-	rc = load_database(&dbf, pw);	
+	rc = load_database(&dbf);
 	if(rc != SUCCESS) {
 		goto err;
 	}
@@ -127,7 +101,7 @@ int main(int argv, char** argc) {
 	(*cmd)(0, argv-1, argc+1);
 
 	if(dbf.modified) {
-		rc = writedbf(&dbf, pw);
+		rc = write_database(&dbf);
 		if(rc != SUCCESS) {
 			goto err;
 		}
@@ -136,9 +110,6 @@ int main(int argv, char** argc) {
 	clear_dbf_v00(&dbf);
 
 	free(cfg.dbfname);
-
-	memset(pw, 0, strlen(pw));
-	free(pw);
 
 	return EXIT_SUCCESS;
 
