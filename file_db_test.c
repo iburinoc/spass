@@ -73,10 +73,10 @@ void write_read_large_test() {
 	AES_KEY pwkey;
 	uint32_t i, j;
 
-	cs_rand(key, 256);
-	init_dflt_dbf_v00(&dbf);
+	cs_rand(key, 255);
+	key[255] = '\0';
+	init_dflt_dbf_v00(&dbf, key);
 
-	create_key_v00(key, 256, &dbf);
 	create_key_AES(dbf.paskey, 256, &pwkey);
 
 	for(i = 0; i < num; i++) {
@@ -96,7 +96,7 @@ void write_read_large_test() {
 	}
 	fclose(out);
 	FILE* in = fopen(fname, "rb");
-	if(read_db_v00(in, &dbf1, key, 256) != SUCCESS) {
+	if(read_db_v00(in, &dbf1, key, strlen(key)) != SUCCESS) {
 		abort();
 	}
 	fclose(out);
@@ -128,3 +128,4 @@ void file_db_tests() {
 	write_read_test();
 	write_read_large_test();
 }
+
