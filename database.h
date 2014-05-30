@@ -37,6 +37,10 @@ uint32_t find_pw(pwdb_t* db, char* name);
  * in the database */
 uint32_t find_inspos(pwdb_t* db, char* name);
 
+/* returns whether or not a password with
+ * this name exists */
+int pw_exists(pwdb_t* db, char* name);
+
 /* add a password to the database
  * this method takes ownership of the password
  * and will free it when necessary 

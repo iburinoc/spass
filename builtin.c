@@ -6,6 +6,7 @@
 #include "file_db.h"
 #include "builtin.h"
 #include "spass_util.h"
+#include "database.h"
 
 static void usage_add() {
 	puts("add usage: spass add [<args>] <name>");

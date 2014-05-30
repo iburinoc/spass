@@ -166,7 +166,7 @@ uint32_t inspos_pw(pwdb_t* db, char* name) {
 	}
 }
 
-static int pw_exists(pwdb_t* db, char* name) {
+int pw_exists(pwdb_t* db, char* name) {
 	errno = 0;
 	find_pw(db, name);
 	
