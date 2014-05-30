@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "file_db.h"
 #include "builtin.h"
+#include "spass_util.h"
 
 static struct option add_options[] = {
 	{"help", no_argument, 0, 'h'},
@@ -39,7 +41,7 @@ static void help_add() {
 }
 
 int add(dbfile_t* dbf, int argc, char** argv) {
-	int c = 0;
+	int c = 0, rc;
 	AES_KEY k;
 	while(c != -1) {
 		int option_index;
@@ -69,11 +71,18 @@ int add(dbfile_t* dbf, int argc, char** argv) {
 
 	create_key_AES(dbf->paskey, 256, &k);
 	passw_t* pw = init_pw(name, password, strlen(password), &k);
+	if(pw == NULL) {
+		return ALLOC_FAIL;
+	}
 
 	memset(&k, 0, sizeof(AES_KEY));
 
-	db_add_pw(dbf.db, pw);
+	rc = db_add_pw(dbf->db, pw);
+	if(rc != SUCCESS) {
+		return rc;
+	}
 
+	dbf->modified = 1;
 	return 0;
 }
 
@@ -83,5 +92,19 @@ int get(dbfile_t* dbf, int argc, char** argv) {
 
 int gen(dbfile_t* dbf, int argc, char** argv) {
 	return 0;
+}
+
+int list(dbfile_t* dbf, int argc, char** argv) {
+	char** list = db_list_names(dbf->db);
+	if(list == NULL) {
+		return ALLOC_FAIL;
+	}
+
+	int i;
+	for(i = 0; i < dbf->db->num; i++) {
+		puts(list[i]);
+	}
+
+	return SUCCESS;
 }
 

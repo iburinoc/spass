@@ -275,6 +275,10 @@ passw_t* db_get_pw(pwdb_t* db, char* name) {
  * (ie only free the returned pointer) */
 char** db_list_names(pwdb_t* db) {
 	char** list = malloc(sizeof(char*) * db->num);
+	if(list == NULL) {
+		return NULL;
+	}
+
 	uint32_t i;
 	
 	for(i = 0; i < db->num; i++) {

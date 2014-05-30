@@ -9,5 +9,7 @@ int get(dbfile_t* dbf, int argc, char** argv);
 
 int gen(dbfile_t* dbf, int argc, char** argv);
 
+int list(dbfile_t* dbf, int argc, char** argv);
+
 #endif
 

@@ -61,6 +61,8 @@ err:
 	return IO_ERR;
 }
 
+#define checkerr() if(rc != SUCCESS) goto err
+
 int main(int argv, char** argc) {
 	if(argv < 2) {
 		usage();
