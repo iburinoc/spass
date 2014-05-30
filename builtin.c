@@ -20,6 +20,11 @@ int add(dbfile_t* dbf, int argc, char** argv) {
 	}
 
 	char* name = argv[1];
+
+	if(pw_exists(dbf->db, name)) {
+		return PW_EXISTS;
+	}
+
 	char* password = spass_getpass("Password to store", NULL, 1);
 
 	if(password == NULL) {
