@@ -24,6 +24,9 @@ TEST_OBJECTS=$(OBJECTS) test_suite.o $(OBJECTS:%.o=%_test.o)
 all: bin $(MAIN_OBJECTS)
 	gcc $(LFLAGS) $(MAIN_OBJECTS) $(LIBS) -o bin/spass
 
+install: all
+	cp bin/spass /usr/local/bin/spass
+
 test: bin $(TEST_OBJECTS)
 	gcc $(LFLAGS) $(TEST_OBJECTS) $(LIBS) -o bin/test
 
