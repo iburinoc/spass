@@ -14,7 +14,8 @@ struct cmds {
 static struct cmds builtins[] = {
 	{ &add, "add", "add a new password to the database" },
 	{ &get, "get", "retrieve a password from the database" },
-	{ &gen, "gen", "generate a new random password and insert it in the database" }
+	{ &gen, "gen", "generate a new random password and insert it in the database" },
+	{ &list, "list", "list the names of the passwords in the database" }
 };
 
 static void cmd_unfound() {
@@ -79,9 +80,7 @@ int main(int argv, char** argc) {
 	}
 	if(rc == NO_CFG) {
 		rc = create_config();
-		if(rc != SUCCESS) {
-			goto err;
-		}
+		checkerr();
 	}
 
 	for(i = 0; i < sizeof(builtins)/sizeof(*builtins); i++) {
@@ -96,11 +95,10 @@ int main(int argv, char** argc) {
 	}
 
 	rc = load_database(&dbf);
-	if(rc != SUCCESS) {
-		goto err;
-	}
+	checkerr();
 
-	(*cmd)(0, argv-1, argc+1);
+	rc = (*cmd)(&dbf, argv-1, argc+1);
+	checkerr();
 
 	if(dbf.modified) {
 		rc = write_database(&dbf);
