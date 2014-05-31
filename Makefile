@@ -15,7 +15,7 @@ LIBS=-libcrypt
 HEADERS=password.h database.h file_db.h
 OBJECTS=password.o database.o file_db.o
 
-MAIN_OBJECTS=$(OBJECTS) spass_main.o spass_util.o builtin.o
+MAIN_OBJECTS=$(OBJECTS) spass_main.o spass_util.o builtin.o generate.o
 
 TEST_OBJECTS=$(OBJECTS) test_suite.o $(OBJECTS:%.o=%_test.o)
 

@@ -128,6 +128,7 @@ err:
 	case NO_CFG:     puts("No config file was found at $HOME/.spass.conf.")                      ; break;
 	case INV_CFG:    puts("Invalid config file, fix it or delete it to regenerate.")             ; break; 
 	case IO_ERR:     puts("There was an error using stdin/out.")                                 ; break;
+	case TOO_LONG:   puts("Parameter was too large.")                                            ; break;
 	}
 
 	return EXIT_FAILURE;

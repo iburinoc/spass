@@ -13,6 +13,7 @@
 #define INV_CFG    9 /* invalid config file/struct */
 #define IO_ERR    10 /* error in IO */
 #define CRYPT_ERR 11 /* cryptography error */
+#define TOO_LONG  12 /* yeah. */
 
 #endif
 
