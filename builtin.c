@@ -9,7 +9,7 @@
 #include "database.h"
 
 static void usage_add() {
-	puts("add usage: spass add [<args>] <name>");
+	puts("add usage: spass add <name>");
 }
 
 int add(dbfile_t* dbf, int argc, char** argv) {
@@ -46,7 +46,9 @@ int add(dbfile_t* dbf, int argc, char** argv) {
 	}
 
 	dbf->modified = 1;
-	return 0;
+
+	puts("Password added");
+	return SUCCESS;
 }
 
 int get(dbfile_t* dbf, int argc, char** argv) {
@@ -93,6 +95,34 @@ int list(dbfile_t* dbf, int argc, char** argv) {
 		puts(list[i]);
 	}
 
+	return SUCCESS;
+}
+
+static void usage_rm() {
+	puts("add usage: spass rm <name>");
+}
+
+int rm(dbfile_t* dbf, int argc, char** argv) {
+	int rc;
+	if(argc < 2) {
+		usage_rm();
+		return 0;
+	}
+
+	char* name = argv[1];
+
+	if(!pw_exists(dbf->db, name)) {
+		return PW_NEXISTS;
+	}
+
+	rc = db_rem_pw(dbf->db, name);
+	if(rc != SUCCESS) {
+		return rc;
+	}
+
+	dbf->modified = 1;
+
+	puts("Password deleted");
 	return SUCCESS;
 }
 

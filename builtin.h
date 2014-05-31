@@ -11,5 +11,7 @@ int gen(dbfile_t* dbf, int argc, char** argv);
 
 int list(dbfile_t* dbf, int argc, char** argv);
 
+int rm(dbfile_t* dbf, int argc, char** argv);
+
 #endif
 

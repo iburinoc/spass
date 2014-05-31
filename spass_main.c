@@ -15,7 +15,8 @@ static struct cmds builtins[] = {
 	{ &add, "add", "add a new password to the database" },
 	{ &get, "get", "retrieve a password from the database" },
 	{ &gen, "gen", "generate a new random password and insert it in the database" },
-	{ &list, "list", "list the names of the passwords in the database" }
+	{ &list, "list", "list the names of the passwords in the database" },
+	{ &rm, "rm", "removes a password from the database" }
 };
 
 static void cmd_unfound() {
@@ -105,6 +106,7 @@ int main(int argv, char** argc) {
 		if(rc != SUCCESS) {
 			goto err;
 		}
+		puts("Database written to file");
 	}
 
 	clear_dbf_v00(&dbf);
