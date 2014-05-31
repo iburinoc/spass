@@ -1,7 +1,8 @@
 #ifndef SPASS_PASSWORD_H
 #define SPASS_PASSWORD_H
 
-#define SPASS_PASSWORD_DEBUG
+//#define SPASS_PASSWORD_DEBUG
+#define MAX_PASSLEN 65536
 
 #include <stdint.h>
 
@@ -34,3 +35,4 @@ void free_pw(passw_t* pw);
 uint32_t serial_size_pw(passw_t* pw);
 
 #endif
+
