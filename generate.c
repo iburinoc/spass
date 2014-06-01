@@ -1,4 +1,5 @@
 #include <string.h>
+#include <math.h>
 
 #include <ibcrypt/rand.h>
 
@@ -28,18 +29,18 @@ int expand_charset(char** ecset, char* cset) {
 
 	for(i = 0; i < len; i++) {
 		if(escaped) {
-			on[cset[i]] = 1;
+			on[(int) cset[i]] = 1;
 			escaped = 0;
 		} else {
 			if(cset[i] == '\\') {
 				escaped = 1;
 			} else {
-				on[cset[i]] = 1;
+				on[(int) cset[i]] = 1;
 			}
 		}
 		if(!escaped && i + 2 < len && cset[i+1] == '-') {
 			size_t j;
-			for(j = cset[i]; j < cset[i+2]; j++) {
+			for(j = cset[i]; j <= cset[i+2]; j++) {
 				on[j] = 1;
 			}
 			i += 2;
@@ -87,5 +88,14 @@ int generate(char* pw, size_t len, char* cset) {
 	free(cset);
 
 	return SUCCESS;
+}
+
+long entropy(char* cset, int len) {
+	int rc = expand_charset(&cset, cset);
+	if(rc != SUCCESS) {
+		return 0;
+	}
+
+	return (int) (log(strlen(cset))/log(2) * len);
 }
 
