@@ -65,6 +65,8 @@ err:
 
 #define checkerr() if(rc != SUCCESS) goto err
 
+char* errmessage = 0;
+
 int main(int argv, char** argc) {
 	if(argv < 2) {
 		usage();
@@ -129,6 +131,11 @@ err:
 	case INV_CFG:    puts("Invalid config file, fix it or delete it to regenerate.")             ; break; 
 	case IO_ERR:     puts("There was an error using stdin/out.")                                 ; break;
 	case TOO_LONG:   puts("Parameter was too large.")                                            ; break;
+	case INV_ARG:    puts("Invalid argument to function.")                                       ; break;
+	}
+
+	if(errmessage) {
+		puts(errmessage);
 	}
 
 	return EXIT_FAILURE;

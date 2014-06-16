@@ -14,6 +14,9 @@
 #define IO_ERR    10 /* error in IO */
 #define CRYPT_ERR 11 /* cryptography error */
 #define TOO_LONG  12 /* yeah. */
+#define INV_ARG   13 /* invalid argument */
+
+extern char* errmessage;
 
 #endif
 

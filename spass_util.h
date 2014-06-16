@@ -3,6 +3,8 @@
 
 #include "file_db.h"
 
+//#define GETPASSDEBUG
+
 struct conf {
 	char* dbfname;
 };

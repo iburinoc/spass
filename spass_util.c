@@ -174,6 +174,7 @@ int write_database(dbfile_t* dbf) {
 	return rc;
 }
 
+#ifndef GETPASSDEBUG
 char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
 	FILE* in;
 	char *pw;
@@ -264,6 +265,14 @@ err0:
 
 	return 0;
 }
+#else
+char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
+	char* pw = "iburinoc";
+	char* ret = malloc(strlen(pw) + 1);
+	memcpy(ret, pw, strlen(pw) + 1);
+	return ret;
+}
+#endif
 
 void zfree(void* p, size_t s) {
 	memset(p, 0, s);
