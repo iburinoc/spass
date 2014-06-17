@@ -55,6 +55,18 @@ int add(dbfile_t* dbf, int argc, char** argv) {
 	return SUCCESS;
 }
 
+int chpw(dbfile_t* dbf, int argc, char** argv) {
+	char* npassword = spass_getpass("New password", "Confirm password", 1);
+	int rc = resalt_dbf_v00(dbf, npassword);
+	zfree(npassword, strlen(npassword));
+	if(rc == SUCCESS) {
+		dbf->modified = 1;
+		return SUCCESS;
+	} else {
+		return rc;
+	}
+}
+
 static void usage_get() {
 	puts("get usage: spass get <name>");
 }

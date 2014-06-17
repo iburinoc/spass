@@ -387,4 +387,3 @@ void clear_dbf_v00(dbfile_v00_t* dbf) {
 
 	memset(dbf, 0, sizeof(dbfile_v00_t));
 }
-

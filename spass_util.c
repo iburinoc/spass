@@ -146,6 +146,8 @@ int load_database(dbfile_t* dbf) {
 
 	fclose(dbfile);
 
+	zfree(password, strlen(password));
+
 	return rc;
 }
 

@@ -13,6 +13,7 @@ struct cmds {
 
 static struct cmds builtins[] = {
 	{ &add, "add", "add a new password to the database" },
+	{ &chpw, "chpw", "change the database password"},
 	{ &get, "get", "retrieve a password from the database" },
 	{ &gen, "gen", "generate a new random password and insert it in the database" },
 	{ &list, "list", "list the names of the passwords in the database" },

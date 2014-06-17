@@ -5,6 +5,8 @@
 
 int add(dbfile_t* dbf, int argc, char** argv);
 
+int chpw(dbfile_t* dbf, int argc, char** argv);
+
 int get(dbfile_t* dbf, int argc, char** argv);
 
 int gen(dbfile_t* dbf, int argc, char** argv);
