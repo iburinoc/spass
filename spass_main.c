@@ -17,7 +17,7 @@ static struct cmds builtins[] = {
 	{ &chpw, "chpw", "change the database password"},
 	{ &get, "get", "retrieve a password from the database" },
 	{ &gen, "gen", "generate a new random password and insert it in the database" },
-	{ &list, "list", "list the names of the passwords in the database" },
+	{ &ls, "ls", "list the names of the passwords in the database" },
 	{ &rm, "rm", "removes a password from the database" }
 };
 

@@ -201,7 +201,7 @@ err0:
 	return rc;
 }
 
-int list(dbfile_t* dbf, int argc, char** argv) {
+int ls(dbfile_t* dbf, int argc, char** argv) {
 	char** list = db_list_names(dbf->db);
 	if(list == NULL) {
 		return ALLOC_FAIL;

@@ -11,7 +11,7 @@ int get(dbfile_t* dbf, int argc, char** argv);
 
 int gen(dbfile_t* dbf, int argc, char** argv);
 
-int list(dbfile_t* dbf, int argc, char** argv);
+int ls(dbfile_t* dbf, int argc, char** argv);
 
 int rm(dbfile_t* dbf, int argc, char** argv);
 
