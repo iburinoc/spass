@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "builtin.h"
 #include "file_db.h"
@@ -109,7 +110,9 @@ int main(int argv, char** argc) {
 		if(rc != SUCCESS) {
 			goto err;
 		}
-		puts("Database written to file");
+		if(isatty(STDOUT_FILENO)) {
+			puts("Database written to file");
+		}
 	}
 
 	clear_dbf_v00(&dbf);

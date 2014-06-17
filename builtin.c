@@ -181,8 +181,13 @@ int gen(dbfile_t* dbf, int argc, char** argv) {
 	dbf->modified = 1;
 
 	long ent = entropy(charset, len);
-	printf("Password generated with %ld bits of entropy:\n", ent);
-	puts(password);
+	if(isatty(STDOUT_FILENO)) {
+		printf("Password generated with %ld bits of entropy:\n", ent);
+	}
+	printf("%s", password);
+	if(isatty(STDOUT_FILENO)) {
+		printf("\n");
+	}
 
 	zero_key_AES(&k);
 	zfree(password, len);
