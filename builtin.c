@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include "file_db.h"
 #include "builtin.h"
@@ -79,7 +80,10 @@ int get(dbfile_t* dbf, int argc, char** argv) {
 		return ALLOC_FAIL;
 	}
 
-	puts(pwtext);
+	printf("%s", pwtext);
+	if(isatty(fileno(stdout))) {
+		printf("\n");
+	}
 
 	zfree(pwtext, pw->passlen);
 	memset(&k, 0, sizeof(AES_KEY));

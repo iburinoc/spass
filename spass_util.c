@@ -180,7 +180,7 @@ char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
 	char *pw;
 	char *confpw;
 	struct termios term, term_old;
-	int tty;
+	int ttyin, ttyout;
 	size_t read;
 
 	/* try to open the terminal */
@@ -189,7 +189,7 @@ char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
 	}
 
 	/* try to turn off echo */
-	if((tty = isatty(fileno(in))) != 0) {
+	if((ttyin = isatty(fileno(in))) != 0) {
 		if(tcgetattr(fileno(in), &term_old)) {
 			/* failed */
 			goto err0;
@@ -200,9 +200,10 @@ char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
 			goto err0;
 		}
 	}
+	ttyout = isatty(fileno(stdout));
 
 tryagain:
-	if(tty) {
+	if(ttyout) {
 		printf("%s: ", prompt);
 	}
 
@@ -218,7 +219,7 @@ tryagain:
 	pw[read-1] = '\0';
 
 	if(confprompt != NULL) {
-		if(tty) {
+		if(ttyout) {
 			printf("%s: ", confprompt);
 		}
 		
@@ -229,7 +230,7 @@ tryagain:
 		confpw[read-1] = '\0';
 
 		if(strcmp(pw, confpw) != 0) {
-			if(tty) {
+			if(ttyout) {
 				printf("Passwords don't match, please try again\n");
 			}
 			zfree(pw, strlen(pw));
@@ -240,7 +241,7 @@ tryagain:
 
 
 	/* reset terminal */
-	if(tty) {
+	if(ttyin) {
 		if(tcsetattr(fileno(in), TCSANOW, &term_old)) {
 			goto err1;
 		}
@@ -259,7 +260,7 @@ err1:
 		zfree(confpw, strlen(confpw));
 	}
 err0:
-	if(tty) {
+	if(ttyin) {
 		fclose(in);
 	}
 
