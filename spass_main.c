@@ -122,24 +122,24 @@ int main(int argv, char** argc) {
 	return EXIT_SUCCESS;
 
 err:
-	printf("Error: ");
+	fprintf(stderr, "%s", "Error: ");
 	switch(rc) {
-	case ALLOC_FAIL: puts("Could not allocate memory, is the system out of memory?")             ; break;
-	case PW_EXISTS:  puts("A password already exists under this name in the database.")          ; break;
-	case PW_NEXISTS: puts("No password was found under this name in the database.")              ; break;
-	case DB_FULL:    puts("The database is full.")                                               ; break;
-	case WRITE_ERR:  puts("Could not write to file.  Is the given address valid?.")              ; break;
-	case READ_ERR:   puts("Could not read database/config from file.  Is the listed file valid?"); break;
-	case INV_FILE:   puts("Database file was not properly formatted or the password was wrong.") ; break;
-	case NO_CFG:     puts("No config file was found at $HOME/.spass.conf.")                      ; break;
-	case INV_CFG:    puts("Invalid config file, fix it or delete it to regenerate.")             ; break; 
-	case IO_ERR:     puts("There was an error using stdin/out.")                                 ; break;
-	case TOO_LONG:   puts("Parameter was too large.")                                            ; break;
-	case INV_ARG:    puts("Invalid argument to function.")                                       ; break;
+	case ALLOC_FAIL: fprintf(stderr, "%s\n", "Could not allocate memory, is the system out of memory?")             ; break;
+	case PW_EXISTS:  fprintf(stderr, "%s\n", "A password already exists under this name in the database.")          ; break;
+	case PW_NEXISTS: fprintf(stderr, "%s\n", "No password was found under this name in the database.")              ; break;
+	case DB_FULL:    fprintf(stderr, "%s\n", "The database is full.")                                               ; break;
+	case WRITE_ERR:  fprintf(stderr, "%s\n", "Could not write to file.  Is the given address valid?.")              ; break;
+	case READ_ERR:   fprintf(stderr, "%s\n", "Could not read database/config from file.  Is the listed file valid?"); break;
+	case INV_FILE:   fprintf(stderr, "%s\n", "Database file was not properly formatted or the password was wrong.") ; break;
+	case NO_CFG:     fprintf(stderr, "%s\n", "No config file was found at $HOME/.spass.conf.")                      ; break;
+	case INV_CFG:    fprintf(stderr, "%s\n", "Invalid config file, fix it or delete it to regenerate.")             ; break; 
+	case IO_ERR:     fprintf(stderr, "%s\n", "There was an error using stdin/out.")                                 ; break;
+	case TOO_LONG:   fprintf(stderr, "%s\n", "Parameter was too large.")                                            ; break;
+	case INV_ARG:    fprintf(stderr, "%s\n", "Invalid argument to function.")                                       ; break;
 	}
 
 	if(errmessage) {
-		puts(errmessage);
+		fprintf(stderr, "%s\n", errmessage);
 	}
 
 	return EXIT_FAILURE;
