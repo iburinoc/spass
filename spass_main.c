@@ -132,7 +132,7 @@ err:
 	case READ_ERR:   fprintf(stderr, "%s\n", "Could not read database/config from file.  Is the listed file valid?"); break;
 	case INV_FILE:   fprintf(stderr, "%s\n", "Database file was not properly formatted or the password was wrong.") ; break;
 	case NO_CFG:     fprintf(stderr, "%s\n", "No config file was found at $HOME/.spass.conf.")                      ; break;
-	case INV_CFG:    fprintf(stderr, "%s\n", "Invalid config file, fix it or delete it to regenerate.")             ; break; 
+	case INV_CFG:    fprintf(stderr, "%s\n", "Invalid config file, fix it or delete it to regenerate.")             ; break;
 	case IO_ERR:     fprintf(stderr, "%s\n", "There was an error using stdin/out.")                                 ; break;
 	case TOO_LONG:   fprintf(stderr, "%s\n", "Parameter was too large.")                                            ; break;
 	case INV_ARG:    fprintf(stderr, "%s\n", "Invalid argument to function.")                                       ; break;
