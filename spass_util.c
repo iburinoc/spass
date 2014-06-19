@@ -141,7 +141,7 @@ int load_database(dbfile_t* dbf) {
 		}
 	}
 
-	char* password = spass_getpass("Password", NULL, 1);
+	char* password = spass_getpass("Password", NULL, isatty(STDIN_FILENO));
 	int rc = read_db_v00(dbfile, dbf, password, strlen(password));
 
 	fclose(dbfile);
