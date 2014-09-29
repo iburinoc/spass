@@ -1,16 +1,16 @@
 CC=gcc
 DEBUG=0
-ORIGFLAGS= -c -Wall -std=c99
+ORIGFLAGS= -c -Wall -std=gnu99
 
 ifeq ($(DEBUG),1)
 	CFLAGS=$(ORIGFLAGS) -g
 	LFLAGS= 
 else
-	CFLAGS=$(ORIGFLAGS) -O3 -flto
-	LFLAGS=-flto
+	CFLAGS=$(ORIGFLAGS) -O3
+	LFLAGS=
 endif
 
-LIBS=-libcrypt
+LIBS=-libcrypt -lm
 
 HEADERS=password.h database.h file_db.h
 OBJECTS=password.o database.o file_db.o

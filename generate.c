@@ -96,7 +96,7 @@ long entropy(char* cset, int len) {
 		return 0;
 	}
 
-	int ent = (int) (log(strlen(cset))/log(2) * len);
+	int ent = (int) (log((double)strlen(cset))/log(2) * len);
 	free(cset);
 
 	return ent;

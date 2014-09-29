@@ -25,7 +25,7 @@ char* expand_tilde(char* path) {
 		if(tmp == NULL) {
 			return NULL;
 		}
-		memcmp(tmp, path, plen+1);
+		memcpy(tmp, path, plen+1);
 		return tmp;
 	}
 
