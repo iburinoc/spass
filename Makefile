@@ -10,7 +10,8 @@ else
 	LFLAGS=-flto
 endif
 
-LIBS=-libcrypt
+LIBS=-L/usr/local/lib/ -libcrypt
+INCLUDE=-I/usr/local/include/
 
 HEADERS=password.h database.h file_db.h
 OBJECTS=password.o database.o file_db.o
@@ -35,7 +36,7 @@ test: bin $(TEST_OBJECTS)
 	gcc $(LFLAGS) $(TEST_OBJECTS) $(LIBS) -o bin/test
 
 .c.o:
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDE) $< -o $@
 
 bin:
 	@mkdir bin
