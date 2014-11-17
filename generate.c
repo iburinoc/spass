@@ -80,7 +80,11 @@ int generate(char* pw, size_t len, char* cset) {
 	size_t csetl = strlen(cset);
 	size_t i;
 	for(i = 0; i < len; i++) {
-		pw[i] = cset[cs_rand_int_range(csetl)];
+		uint32_t ch;
+		if(cs_rand_uint32_range(&ch, csetl) != 0) {
+			return CRYPT_ERR;
+		}
+		pw[i] = cset[ch];
 	}
 
 	pw[len] = '\0';
