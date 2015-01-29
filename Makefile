@@ -35,7 +35,7 @@ test: bin $(TEST_OBJECTS)
 	gcc $(LFLAGS) $(TEST_OBJECTS) $(LIBS) -o bin/test
 
 libs:
-	git submodule update
+	git submodule update --init --recursive
 	$(MAKE) -C libibur
 	$(MAKE) -C ibcrypt
 
