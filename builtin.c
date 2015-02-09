@@ -6,6 +6,8 @@
 #include <limits.h>
 #include <unistd.h>
 
+#include <ibcrypt/zfree.h>
+
 #include "file_db.h"
 #include "builtin.h"
 #include "spass_util.h"

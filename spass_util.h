@@ -31,6 +31,4 @@ int write_database(dbfile_t* dbf);
 
 char* spass_getpass(const char* prompt, const char* confprompt, int usetty); 
 
-void zfree(void* p, size_t s);
-
 #endif

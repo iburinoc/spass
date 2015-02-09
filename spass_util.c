@@ -4,6 +4,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <ibcrypt/zfree.h>
+
 #include "spass_util.h"
 #include "database.h"
 #include "file_db.h"
@@ -277,7 +279,3 @@ char* spass_getpass(const char* prompt, const char* confprompt, int usetty) {
 }
 #endif
 
-void zfree(void* p, size_t s) {
-	memset(p, 0, s);
-	free(p);
-}
