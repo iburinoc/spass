@@ -46,10 +46,9 @@ bin:
 	@mkdir bin
 	
 clean:
-	rm -rf *.o 
-	
-cleanall: clean
-	rm -rf bin
+	rm -rf bin/
+	rm -rf *.o
+	$(MAKE) -C ibcrypt clean
 
 remake: clean all
 
