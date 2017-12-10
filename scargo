@@ -1,0 +1,3 @@
+#!/bin/bash
+
+SODIUM_LIB_DIR=libsodium/src/libsodium/.libs/ SODIUM_STATIC=1 cargo $*

@@ -1,6 +1,8 @@
 [package]
 name = "spass"
-version = "0.1.0"
+version = "2.0.0"
 authors = ["Sean Purcell <me@seanp.xyz>"]
 
 [dependencies]
+sodiumoxide = "0.0.16"
+rusqlite = "0.13.0"
