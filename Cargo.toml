@@ -4,5 +4,9 @@ version = "2.0.0"
 authors = ["Sean Purcell <me@seanp.xyz>"]
 
 [dependencies]
+clap = "2.29.0"
 sodiumoxide = "0.0.16"
-rusqlite = "0.13.0"
+
+[dependencies.rusqlite]
+version = "0.13.0"
+features = ["bundled"]
