@@ -1,6 +1,6 @@
 extern crate sodiumoxide;
 
-use sodiumoxide::crypto::pwhash;
+use sodiumoxide::crypto::{auth, pwhash};
 use sodiumoxide::utils;
 
 use types::{User, Password};
@@ -41,6 +41,12 @@ pub fn get_key(user: &User, pw: &str) -> Key {
     k
 }
 
+pub fn derive_subkey(k: &Key, id: &[u8]) -> Key {
+    let auth::Tag(sk) = auth::authenticate(k,
+            &auth::Key::from_slice(k).unwrap());
+    sk
+}
+
 pub fn create_user(pw: &str) -> (User, Key) {
     let mut u: User = Default::default();
 
@@ -54,5 +60,6 @@ pub fn create_user(pw: &str) -> (User, Key) {
 }
 
 pub fn verify_file(user: &User, key: &Key, conn: &Connection) -> bool {
+    let skey = derive_subkey(key, "VERIFY".as_bytes());
     false
 }
