@@ -11,9 +11,8 @@ fn create_table(conn: &Connection, name: &str, schema: &str) {
         &[&name],
         |row| { row.get(0) } ).unwrap();
     if exists == 0 {
-        let res = conn.execute(
+        conn.execute(
             &format!("CREATE TABLE {} {}", name, schema), &[]).unwrap();
-        println!("{:?}", res);
     }
 }
 
@@ -47,18 +46,28 @@ pub fn get_user(conn: &Connection) -> User {
         }).unwrap()
 }
 
-pub fn test() {
-    let conn = Connection::open("test").unwrap();
+pub fn set_user(conn: &mut Connection, user: &User) {
+    conn.execute(
+            "REPLACE INTO users VALUES (?, ?, ?)",
+            &[&user.hash.as_ref(), &user.salt.as_ref(), &user.sig.as_ref()])
+        .unwrap();
+}
 
-    create_table(&conn, "passwords", "");
-    create_table(&conn, "verify", "");
+pub fn get_passwords(conn: &Connection) -> Vec<Password> {
+    let mut stmt = conn
+        .prepare("SELECT id, name, password FROM passwords ORDER BY id")
+        .unwrap();
+    let val = stmt.query_map(&[], |row| {
+        let mut pw = Password {
+            id: Default::default(),
+            name: row.get(1),
+            password: row.get(2)
+        };
+        pw.id.copy_from_slice(row.get::<i32, Vec<u8>>(0).as_ref());
+        pw
+    }).unwrap()
+      .map(|res| res.unwrap())
+      .collect();
 
-    match conn.execute("CREATE TABLE passwords (
-                id          BLOB PRIMARY KEY,
-                password    BLOB NOT NULL,
-                nonce       BLOB NOT NULL
-            )", &[]) {
-        Ok(i) => println!("{} ok!", i),
-        Err(i) => println!("{:?} not ok!", i),
-    }
+	val
 }

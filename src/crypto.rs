@@ -3,8 +3,9 @@ extern crate sodiumoxide;
 use sodiumoxide::crypto::{auth, pwhash};
 use sodiumoxide::utils;
 
-use types::{User, Password};
+use types::User;
 use database::Connection;
+use database;
 
 pub const KEYBYTES: usize = 32;
 pub const HASHBYTES: usize = 32;
@@ -42,7 +43,7 @@ pub fn get_key(user: &User, pw: &str) -> Key {
 }
 
 pub fn derive_subkey(k: &Key, id: &[u8]) -> Key {
-    let auth::Tag(sk) = auth::authenticate(k,
+    let auth::Tag(sk) = auth::authenticate(id,
             &auth::Key::from_slice(k).unwrap());
     sk
 }
@@ -59,7 +60,21 @@ pub fn create_user(pw: &str) -> (User, Key) {
     (u, k)
 }
 
-pub fn verify_file(user: &User, key: &Key, conn: &Connection) -> bool {
+pub fn compute_file_sig(key: &Key, conn: &Connection) -> [u8; auth::TAGBYTES] {
     let skey = derive_subkey(key, "VERIFY".as_bytes());
-    false
+
+    let mut state = auth::State::init(&skey);
+    for passw in database::get_passwords(conn) {
+        state.update(&passw.id);
+        state.update(passw.name.as_slice());
+        state.update(passw.password.as_slice());
+    }
+
+    let auth::Tag(digest) = state.finalize();
+
+    digest
+}
+
+pub fn verify_file(user: &User, key: &Key, conn: &Connection) -> bool {
+    sodiumoxide::utils::memcmp(&user.sig, &compute_file_sig(key, conn))
 }
