@@ -1,6 +1,8 @@
 extern crate rusqlite;
 extern crate sodiumoxide;
 
+use std::path::Path;
+
 pub use rusqlite::Connection;
 
 use types::{User, Password};
@@ -16,7 +18,7 @@ fn create_table(conn: &Connection, name: &str, schema: &str) {
     }
 }
 
-pub fn init(path: &str) -> Connection {
+pub fn init(path: &Path) -> Connection {
     let conn = Connection::open(&path).unwrap();
 
     create_table(&conn, "passwords", "(
@@ -33,17 +35,25 @@ pub fn init(path: &str) -> Connection {
     conn
 }
 
-pub fn get_user(conn: &Connection) -> User {
-    conn.query_row(
-        "SELECT hash, salt, sig FROM users",
-        &[],
-        |row| {
-            let mut u: User = Default::default();
-            u.hash.copy_from_slice(row.get::<i32, Vec<u8>>(0).as_ref());
-            u.salt.copy_from_slice(row.get::<i32, Vec<u8>>(1).as_ref());
-            u.sig.copy_from_slice(row.get::<i32, Vec<u8>>(2).as_ref());
-            u
-        }).unwrap()
+pub fn reset(conn: &mut Connection) {
+    conn.execute("DELETE FROM passwords", &[]).unwrap();
+    conn.execute("DELETE FROM users", &[]).unwrap();
+}
+
+pub fn get_user(conn: &Connection) -> Option<User> {
+    match conn.query_row(
+            "SELECT hash, salt, sig FROM users",
+            &[],
+            |row| {
+                let mut u: User = Default::default();
+                u.hash.copy_from_slice(row.get::<i32, Vec<u8>>(0).as_ref());
+                u.salt.copy_from_slice(row.get::<i32, Vec<u8>>(1).as_ref());
+                u.sig.copy_from_slice(row.get::<i32, Vec<u8>>(2).as_ref());
+                u
+            }) {
+        Ok(user) => Some(user),
+        Err(_) => None,
+    }
 }
 
 pub fn set_user(conn: &mut Connection, user: &User) {

@@ -11,8 +11,8 @@ pub const KEYBYTES: usize = 32;
 pub const HASHBYTES: usize = 32;
 pub const DERIVBYTES: usize = KEYBYTES + HASHBYTES;
 
-type Key = [u8; KEYBYTES];
-type Hash = [u8; HASHBYTES];
+pub type Key = [u8; KEYBYTES];
+pub type Hash = [u8; HASHBYTES];
 
 pub use sodiumoxide::init;
 
