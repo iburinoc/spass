@@ -20,6 +20,13 @@ pub fn update_verify(user: &User, key: &Key, conn: &mut Connection) {
     database::set_user(conn, &nuser);
 }
 
+pub type CmdFn = fn(&ArgMatches, &User, &Key, &mut Connection)
+    -> Result<(), String>;
+pub static COMMANDS: &'static [(&str, CmdFn)] = &[
+    ("add", add),
+    ("ls", ls),
+];
+
 pub fn add(args: &ArgMatches,
            user: &User,
            key: &Key,

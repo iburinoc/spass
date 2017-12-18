@@ -63,19 +63,12 @@ fn run_app() -> Result<(), String> {
         return Err("Password file invalid, possibly tampered with".into());
     }
 
-    let commands = [
-        ("add", commands::add),
-        //("get", commands::get),
-        ("ls", commands::ls),
-        //("rm", commands::rm),
-    ];
-
     match app_m.subcommand() {
         (command, Some(sub_m)) => {
-            let (name, f) = commands.iter()
-                .find(|(name, _)| name == command)
-                .unwrap();
-            f(sub_m, &user, &key, &mut conn)
+            let func = commands::COMMANDS.iter()
+                .find(|ent| ent.0 == command)
+                .unwrap().1;
+            func(sub_m, &user, &key, &mut conn)
         },
         _ => panic!(),
     }
