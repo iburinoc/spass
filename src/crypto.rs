@@ -1,6 +1,6 @@
 extern crate sodiumoxide;
 
-use sodiumoxide::crypto::{auth, pwhash};
+use sodiumoxide::crypto::{auth, pwhash, secretbox};
 use sodiumoxide::utils;
 
 use types::User;
@@ -13,6 +13,7 @@ pub const DERIVBYTES: usize = KEYBYTES + HASHBYTES;
 
 pub type Key = [u8; KEYBYTES];
 pub type Hash = [u8; HASHBYTES];
+pub type Tag = [u8; auth::TAGBYTES];
 
 pub use sodiumoxide::init;
 
@@ -77,4 +78,25 @@ pub fn compute_file_sig(key: &Key, conn: &Connection) -> [u8; auth::TAGBYTES] {
 
 pub fn verify_file(user: &User, key: &Key, conn: &Connection) -> bool {
     sodiumoxide::utils::memcmp(&user.sig, &compute_file_sig(key, conn))
+}
+
+pub fn encrypt_blob(k: &Key, m: &[u8]) -> Vec<u8> {
+    let nonce = secretbox::gen_nonce();
+    let mut res = nonce.as_ref().to_vec();
+    let key = secretbox::Key::from_slice(k).unwrap();
+    res.append(&mut secretbox::seal(m, &nonce, &key));
+    res
+}
+
+pub fn decrypt_blob(k: &Key, c: &[u8]) -> Result<Vec<u8>, ()> {
+    let nonce = secretbox::Nonce::from_slice(&c[ .. secretbox::NONCEBYTES])
+        .unwrap();
+    let key = secretbox::Key::from_slice(k).unwrap();
+    secretbox::open(&c[secretbox::NONCEBYTES .. ], &nonce, &key)
+}
+
+pub fn password_id(namekey: &Key, name: &str) -> Tag {
+    let key = auth::Key::from_slice(namekey).unwrap();
+    let auth::Tag(tag) = auth::authenticate(name.as_bytes(), &key);
+    tag
 }

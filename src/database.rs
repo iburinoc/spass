@@ -5,7 +5,8 @@ use std::path::Path;
 
 pub use rusqlite::Connection;
 
-use types::{User, Password};
+use crypto::Tag;
+use types::{Password,User};
 
 fn create_table(conn: &Connection, name: &str, schema: &str) {
     let exists: i64 = conn.query_row(
@@ -63,21 +64,42 @@ pub fn set_user(conn: &mut Connection, user: &User) {
         .unwrap();
 }
 
+fn password_from_row(row: &rusqlite::Row) -> Password {
+    let mut pw = Password {
+        id: Default::default(),
+        name: row.get(1),
+        password: row.get(2)
+    };
+    pw.id.copy_from_slice(row.get::<i32, Vec<u8>>(0).as_ref());
+    pw
+}
+
 pub fn get_passwords(conn: &Connection) -> Vec<Password> {
     let mut stmt = conn
         .prepare("SELECT id, name, password FROM passwords ORDER BY id")
         .unwrap();
-    let val = stmt.query_map(&[], |row| {
-        let mut pw = Password {
-            id: Default::default(),
-            name: row.get(1),
-            password: row.get(2)
-        };
-        pw.id.copy_from_slice(row.get::<i32, Vec<u8>>(0).as_ref());
-        pw
-    }).unwrap()
+    let val = stmt.query_map(&[], password_from_row).unwrap()
       .map(|res| res.unwrap())
       .collect();
 
 	val
+}
+
+pub fn password_by_id(conn: &Connection, id: &Tag) -> Option<Password> {
+    match conn.query_row(
+            "SELECT id, name, password FROM passwords WHERE id = ?",
+             &[&id.as_ref()],
+             password_from_row) {
+        Ok(pw) => Some(pw),
+        Err(rusqlite::Error::QueryReturnedNoRows) => None,
+        Err(err) => {
+            use std::error::Error;
+            panic!("{}", err.description());
+        },
+    }
+}
+
+pub fn store_password(conn: &mut Connection, pw: &Password) {
+    conn.execute("INSERT INTO passwords VALUES (?, ?, ?)",
+        &[&pw.id.as_ref(), &pw.name, &pw.password]).unwrap();
 }
