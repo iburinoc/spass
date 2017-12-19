@@ -28,7 +28,7 @@ pub fn init(path: &Path) -> Connection {
             password    BLOB NOT NULL
         )");
     create_table(&conn, "users", "(
-            hash        BLOB NOT NULL,
+            hash        BLOB PRIMARY KEY,
             salt        BLOB NOT NULL,
             sig         BLOB NOT NULL
         )");
@@ -58,7 +58,7 @@ pub fn get_user(conn: &Connection) -> Option<User> {
 }
 
 pub fn set_user(conn: &mut Connection, user: &User) {
-    conn.execute(
+    let result = conn.execute(
             "REPLACE INTO users VALUES (?, ?, ?)",
             &[&user.hash.as_ref(), &user.salt.as_ref(), &user.sig.as_ref()])
         .unwrap();

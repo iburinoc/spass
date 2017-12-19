@@ -40,6 +40,10 @@ fn run_app() -> Result<(), String> {
                  .required(true)
                  .help("The name of the password to add")))
         .subcommand(SubCommand::with_name("ls"))
+        .subcommand(SubCommand::with_name("get")
+            .arg(Arg::with_name("name")
+                 .required(true)
+                 .help("The name of the password to get")))
         .get_matches();
 
     eprintln!("{:?}", app_m);

@@ -65,7 +65,8 @@ pub fn compute_file_sig(key: &Key, conn: &Connection) -> [u8; auth::TAGBYTES] {
     let skey = derive_subkey(key, "VERIFY".as_bytes());
 
     let mut state = auth::State::init(&skey);
-    for passw in database::get_passwords(conn) {
+    let passwords = database::get_passwords(conn);
+    for passw in passwords {
         state.update(&passw.id);
         state.update(passw.name.as_slice());
         state.update(passw.password.as_slice());
@@ -77,7 +78,8 @@ pub fn compute_file_sig(key: &Key, conn: &Connection) -> [u8; auth::TAGBYTES] {
 }
 
 pub fn verify_file(user: &User, key: &Key, conn: &Connection) -> bool {
-    sodiumoxide::utils::memcmp(&user.sig, &compute_file_sig(key, conn))
+    let file_sig = compute_file_sig(key, conn);
+    sodiumoxide::utils::memcmp(&user.sig, &file_sig)
 }
 
 pub fn encrypt_blob(k: &Key, m: &[u8]) -> Vec<u8> {

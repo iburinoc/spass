@@ -10,7 +10,7 @@ use types::{Password,User};
 
 use super::prompt_passw;
 
-pub fn update_verify(user: &User, key: &Key, conn: &mut Connection) {
+fn update_verify(user: &User, key: &Key, conn: &mut Connection) {
     let nuser = User {
         hash: user.hash,
         salt: user.salt,
@@ -20,23 +20,32 @@ pub fn update_verify(user: &User, key: &Key, conn: &mut Connection) {
     database::set_user(conn, &nuser);
 }
 
+fn get_keys(key: &Key) -> (Key, Key, Key) {
+    let ikey = crypto::derive_subkey(key, "ID".as_bytes());
+    let nkey = crypto::derive_subkey(key, "NAME".as_bytes());
+    let pkey = crypto::derive_subkey(key, "PASSWORD".as_bytes());
+    (ikey, nkey, pkey)
+}
+
 pub type CmdFn = fn(&ArgMatches, &User, &Key, &mut Connection)
     -> Result<(), String>;
 pub static COMMANDS: &'static [(&str, CmdFn)] = &[
     ("add", add),
     ("ls", ls),
+    ("get", get),
 ];
+
+
 
 pub fn add(args: &ArgMatches,
            user: &User,
            key: &Key,
            conn: &mut Connection) -> Result<(), String> {
-    let nkey = crypto::derive_subkey(key, "NAME".as_bytes());
-    let pkey = crypto::derive_subkey(key, "PASSWORD".as_bytes());
+    let (ikey, nkey, pkey) = get_keys(key);
 
     let name = args.value_of("name").unwrap();
 
-    let id = crypto::password_id(&nkey, name.as_ref());
+    let id = crypto::password_id(&ikey, name.as_ref());
 
     if database::password_by_id(conn, &id).is_some() {
         return Err(format!("Password with name {} already exists", name));
@@ -57,6 +66,29 @@ pub fn add(args: &ArgMatches,
     update_verify(user, key, conn);
 
     Ok(())
+}
+
+pub fn get(args: &ArgMatches,
+           _user: &User,
+           key: &Key,
+           conn: &mut Connection) -> Result<(), String> {
+    let (ikey, _, pkey) = get_keys(key);
+
+    let name = args.value_of("name").unwrap();
+
+    let id = crypto::password_id(&ikey, name.as_ref());
+
+    match database::password_by_id(conn, &id) {
+        Some(pw) => match crypto::decrypt_blob(&pkey, pw.password.as_ref()) {
+            Ok(bytes) => {
+                let passw = String::from_utf8_lossy(bytes.as_ref());
+                println!("{}", passw);
+                Ok(())
+            },
+            Err(_) => Err(format!("Failed to decrypt password {}", name)),
+        },
+        None => Err(format!("Password {} not found", name))
+    }
 }
 
 pub fn ls(_args: &ArgMatches,
