@@ -44,6 +44,10 @@ fn run_app() -> Result<(), String> {
             .arg(Arg::with_name("name")
                  .required(true)
                  .help("The name of the password to get")))
+        .subcommand(SubCommand::with_name("rm")
+            .arg(Arg::with_name("name")
+                 .required(true)
+                 .help("The name of the password to get")))
         .get_matches();
 
     eprintln!("{:?}", app_m);

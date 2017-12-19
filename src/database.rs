@@ -103,3 +103,8 @@ pub fn store_password(conn: &mut Connection, pw: &Password) {
     conn.execute("INSERT INTO passwords VALUES (?, ?, ?)",
         &[&pw.id.as_ref(), &pw.name, &pw.password]).unwrap();
 }
+
+pub fn remove_password(conn: &mut Connection, id: &Tag) -> bool {
+    return conn.execute("DELETE FROM passwords WHERE id = ?", &[&id.as_ref()])
+        .unwrap() > 0;
+}

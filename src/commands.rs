@@ -33,6 +33,7 @@ pub static COMMANDS: &'static [(&str, CmdFn)] = &[
     ("add", add),
     ("ls", ls),
     ("get", get),
+    ("rm", rm),
 ];
 
 
@@ -115,5 +116,24 @@ pub fn ls(_args: &ArgMatches,
     for name in names {
         println!("{}", name);
     }
+    Ok(())
+}
+
+pub fn rm(args: &ArgMatches,
+          user: &User,
+          key: &Key,
+          conn: &mut Connection) -> Result<(), String> {
+    let (ikey, _, _) = get_keys(key);
+
+    let name = args.value_of("name").unwrap();
+
+    let id = crypto::password_id(&ikey, name.as_ref());
+
+    if !database::remove_password(conn, &id) {
+        return Err(format!("Password {} not found", name));
+    }
+
+    update_verify(user, key, conn);
+
     Ok(())
 }
