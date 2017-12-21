@@ -10,6 +10,8 @@ use types::{Password,User};
 
 use super::prompt_passw;
 
+mod generate;
+
 fn update_verify(user: &User, key: &Key, conn: &mut Connection) {
     let nuser = User {
         hash: user.hash,
@@ -65,6 +67,23 @@ pub fn add(args: &ArgMatches,
         });
 
     update_verify(user, key, conn);
+
+    Ok(())
+}
+
+pub fn gen(args: &ArgMatches,
+           user: &User,
+           key: &Key,
+           conn: &mut Connection) -> Result<(), String> {
+    let name = args.value_of("name").unwrap();
+
+    let len = value_t!(args.value_of("length"), usize).unwrap();
+    let opts = PasswCharset {
+        lower: args.value_of("lower").unwrap() == "y",
+        upper: args.value_of("upper").unwrap() == "y",
+        digit: args.value_of("digit").unwrap() == "y",
+        sym: args.value_of("sym").unwrap() == "y",
+    };
 
     Ok(())
 }

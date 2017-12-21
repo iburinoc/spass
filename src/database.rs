@@ -58,7 +58,7 @@ pub fn get_user(conn: &Connection) -> Option<User> {
 }
 
 pub fn set_user(conn: &mut Connection, user: &User) {
-    let result = conn.execute(
+    conn.execute(
             "REPLACE INTO users VALUES (?, ?, ?)",
             &[&user.hash.as_ref(), &user.salt.as_ref(), &user.sig.as_ref()])
         .unwrap();

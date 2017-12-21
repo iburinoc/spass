@@ -1,6 +1,7 @@
 extern crate sodiumoxide;
 
 use sodiumoxide::crypto::{auth, pwhash, secretbox};
+use sodiumoxide::randombytes;
 use sodiumoxide::utils;
 
 use types::User;
@@ -16,6 +17,23 @@ pub type Hash = [u8; HASHBYTES];
 pub type Tag = [u8; auth::TAGBYTES];
 
 pub use sodiumoxide::init;
+
+pub fn random(max: u64) -> u64 {
+    if max != 0 {
+        let mut ret = max;
+        while ret == max {
+            use std::u64;
+            let val = randombytes::randombytes(8).iter()
+                .fold(0u64, |a, b| 0x100u64 * a + (*b as u64));
+            if u64::MAX / max > val / max {
+                ret = val % max;
+            }
+        };
+        ret
+    } else {
+        0u64
+    }
+}
 
 fn derive_key(key: &mut Key, hash: &mut Hash,
               pw: &str, salt: &[u8; pwhash::SALTBYTES]) {
