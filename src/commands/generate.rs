@@ -3,10 +3,10 @@ extern crate sodiumoxide;
 use crypto;
 
 pub struct PasswCharset {
-    lower: bool,
-    upper: bool,
-    digit: bool,
-    sym: bool
+    pub lower: bool,
+    pub upper: bool,
+    pub digit: bool,
+    pub sym: bool
 }
 
 fn get_chars(opts: &PasswCharset) -> Result<Vec<char>, String> {
@@ -43,7 +43,7 @@ pub fn generate(len: usize, opts: &PasswCharset) ->
     let mut pw = String::new();
     pw.reserve(len);
 
-    for i in 0..len {
+    for _ in 0..len {
         let idx = crypto::random(chars.len() as u64);
         pw.push(chars[idx as usize]);
     }

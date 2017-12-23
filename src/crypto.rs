@@ -49,16 +49,16 @@ fn derive_key(key: &mut Key, hash: &mut Hash,
     hash.copy_from_slice(&res[KEYBYTES .. DERIVBYTES]);
 }
 
-pub fn get_key(user: &User, pw: &str) -> Key {
+pub fn get_key(user: &User, pw: &str) -> Result<Key, String> {
     let mut k: Key = Default::default();
     let mut h: Hash = Default::default();
 
     derive_key(&mut k, &mut h, pw, &user.salt);
-    if !utils::memcmp(&h, &user.hash) {
-        panic!("Password incorrect");
+    if utils::memcmp(&h, &user.hash) {
+        Ok(k)
+    } else {
+        Err("Password incorrect".into())
     }
-
-    k
 }
 
 pub fn derive_subkey(k: &Key, id: &[u8]) -> Key {

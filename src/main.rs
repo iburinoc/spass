@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate clap;
 extern crate rpassword;
 extern crate rusqlite;
@@ -8,7 +9,7 @@ use std::{error,ffi,fs,io,path,process};
 
 use clap::{App,Arg,SubCommand};
 
-pub use rpassword::prompt_password_stderr as prompt_passw;
+use rpassword::prompt_password_stderr;
 
 mod commands;
 mod crypto;
@@ -35,58 +36,84 @@ fn run_app() -> Result<(), String> {
              .long("database")
              .value_name("FILE")
              .help("Use a specific database file"))
+        .arg(Arg::with_name("silent")
+             .short("s")
+             .long("silent")
+             .help("Don't print prompts for passwords"))
         .subcommand(SubCommand::with_name("add")
             .arg(Arg::with_name("name")
                  .required(true)
-                 .help("The name of the password to add")))
-        .subcommand(SubCommand::with_name("ls"))
+                 .help("The name of the password to add"))
+            .about("Add an existing password"))
+        .subcommand(SubCommand::with_name("chpw")
+            .about("Change the master password"))
         .subcommand(SubCommand::with_name("gen")
             .arg(Arg::with_name("length")
                  .short("l")
                  .long("length")
                  .value_name("LENGTH")
                  .default_value("24")
-                 .validator(|s| s.chars().map(|x| x.is_digit(10)).all())
+                 .validator(|s|
+                    if s.chars().all(|x| x.is_digit(10)) {
+                        Ok(())
+                    } else {
+                        Err("Length must be a positive integer".into())
+                    })
                  .help("The length of the password to generate"))
             .arg(Arg::with_name("lower")
                  .short("a")
                  .long("lower")
                  .value_name("ON")
                  .default_value("y")
-                 .allowed_values(&["y", "n"])
+                 .possible_values(&["y", "n"])
                  .help("Whether to include lower-case letters"))
-            .arg(Arg::with_name("lower")
-                 .short("a")
-                 .long("lower")
+            .arg(Arg::with_name("upper")
+                 .short("A")
+                 .long("upper")
                  .value_name("ON")
                  .default_value("y")
-                 .allowed_values(&["y", "n"])
-                 .help("Whether to include lower-case letters"))
-            .arg(Arg::with_name("lower")
-                 .short("a")
-                 .long("lower")
+                 .possible_values(&["y", "n"])
+                 .help("Whether to include upper-case letters"))
+            .arg(Arg::with_name("digit")
+                 .short("0")
+                 .long("digit")
                  .value_name("ON")
                  .default_value("y")
-                 .allowed_values(&["y", "n"])
-                 .help("Whether to include lower-case letters"))
+                 .possible_values(&["y", "n"])
+                 .help("Whether to include digits"))
+            .arg(Arg::with_name("sym")
+                 .short("@")
+                 .long("sym")
+                 .value_name("ON")
+                 .default_value("y")
+                 .possible_values(&["y", "n"])
+                 .help("Whether to include symbols: !@#$%?"))
             .arg(Arg::with_name("name")
                  .required(true)
-                 .help("The name of the password to generate")
-                 .last()))
+                 .help("The name of the password to generate"))
+            .about("Randomly generate a new password"))
         .subcommand(SubCommand::with_name("get")
             .arg(Arg::with_name("name")
                  .required(true)
-                 .help("The name of the password to get")))
+                 .help("The name of the password to get"))
+            .about("Get a password"))
+        .subcommand(SubCommand::with_name("ls")
+            .about("List all passwords stored"))
         .subcommand(SubCommand::with_name("rm")
             .arg(Arg::with_name("name")
                  .required(true)
-                 .help("The name of the password to get")))
+                 .help("The name of the password to get"))
+            .about("Remove a password"))
         .get_matches();
-
-    eprintln!("{:?}", app_m);
 
     if app_m.subcommand_name() == None {
         return Err(app_m.usage().into());
+    }
+
+    if app_m.is_present("silent") {
+        unsafe {
+            SILENT = true;
+        }
     }
 
     crypto::init();
@@ -95,7 +122,7 @@ fn run_app() -> Result<(), String> {
     let (user, key) = match database::get_user(&conn) {
         Some(user) => {
             let passw = prompt_passw("Master password: ").unwrap();
-            let key = crypto::get_key(&user, &passw);
+            let key = crypto::get_key(&user, &passw)?;
             (user, key)
         },
         None => try!(create_user(&mut conn)),
@@ -126,7 +153,6 @@ fn open_database(dbarg: Option<&ffi::OsStr>) -> Result<Connection, String> {
         &*shellexpand::tilde(
             &*path.to_string_lossy()));
 
-    eprintln!("DBPATH {:?}", dbpath);
     Ok(database::init(dbpath.as_ref()))
 }
 
@@ -204,21 +230,15 @@ fn create_user(conn: &mut database::Connection) ->
     Ok((user, key))
 }
 
-fn do_setup(conn: &mut database::Connection) {
-    let pw = prompt_passw("Master password: ").unwrap();
-    let (mut user, key) = crypto::create_user(&pw);
+static mut SILENT: bool = false;
 
-    user.sig = crypto::compute_file_sig(&key, conn);
-
-    eprintln!("{:?} {:?} {:?}", user, pw, key);
-
-    database::set_user(conn, &user);
-}
-
-fn do_test(conn: &database::Connection) {
-    let user = database::get_user(&conn).unwrap();
-    let pw = prompt_passw("Master password: ").unwrap();
-    let key = crypto::get_key(&user, &pw);
-    eprintln!("{:?} {:?} {:?}", user, pw, key);
-    eprintln!("verify: {:?}", crypto::verify_file(&user, &key, conn));
+pub fn prompt_passw(prompt: &str) -> std::io::Result<String> {
+    prompt_password_stderr(
+        unsafe {
+            if SILENT {
+                ""
+            } else {
+                prompt
+            }
+        })
 }
