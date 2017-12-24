@@ -70,6 +70,8 @@ pub fn add(args: &ArgMatches,
 
     update_verify(user, key, conn);
 
+    println!("{} added", name);
+
     Ok(())
 }
 
@@ -108,6 +110,8 @@ pub fn chpw(_args: &ArgMatches,
     database::set_user(conn, &nuser);
     //tx.commit().unwrap();
     conn.execute("COMMIT", &[]).unwrap();
+
+    println!("Password successfully changed");
 
     Ok(())
 }

@@ -22,7 +22,7 @@ use types::User;
 fn main() {
     process::exit(match run_app() {
         Ok(_) => 0,
-        Err(msg) => { eprintln!("{}", msg); 1 },
+        Err(msg) => { eprintln!("Error: {}", msg); 1 },
     })
 }
 
@@ -117,7 +117,7 @@ fn run_app() -> Result<(), String> {
     }
 
     crypto::init();
-    let mut conn = try!(open_database(app_m.value_of_os("database")));
+    let mut conn = open_database(app_m.value_of_os("database"))?;
 
     let (user, key) = match database::get_user(&conn) {
         Some(user) => {
@@ -125,7 +125,7 @@ fn run_app() -> Result<(), String> {
             let key = crypto::get_key(&user, &passw)?;
             (user, key)
         },
-        None => try!(create_user(&mut conn)),
+        None => create_user(&mut conn)?,
     };
     if !crypto::verify_file(&user, &key, &conn) {
         return Err("Password file invalid, possibly tampered with".into());
