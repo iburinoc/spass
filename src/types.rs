@@ -1,7 +1,7 @@
 extern crate sodiumoxide;
 
-use sodiumoxide::crypto::{auth, pwhash};
 use super::crypto;
+use sodiumoxide::crypto::{auth, pwhash};
 
 #[derive(Default, Debug)]
 pub struct User {

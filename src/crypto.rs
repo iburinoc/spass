@@ -4,9 +4,9 @@ use sodiumoxide::crypto::{auth, pwhash, secretbox};
 use sodiumoxide::randombytes;
 use sodiumoxide::utils;
 
-use types::User;
-use database::Connection;
 use database;
+use database::Connection;
+use types::User;
 
 pub const KEYBYTES: usize = 32;
 pub const HASHBYTES: usize = 32;
@@ -23,30 +23,32 @@ pub fn random(max: u64) -> u64 {
         let mut ret = max;
         while ret == max {
             use std::u64;
-            let val = randombytes::randombytes(8).iter()
+            let val = randombytes::randombytes(8)
+                .iter()
                 .fold(0u64, |a, b| 0x100u64 * a + (*b as u64));
             if u64::MAX / max > val / max {
                 ret = val % max;
             }
-        };
+        }
         ret
     } else {
         0u64
     }
 }
 
-fn derive_key(key: &mut Key, hash: &mut Hash,
-              pw: &str, salt: &[u8; pwhash::SALTBYTES]) {
+fn derive_key(key: &mut Key, hash: &mut Hash, pw: &str, salt: &[u8; pwhash::SALTBYTES]) {
     let mut res = [0u8; DERIVBYTES];
     pwhash::derive_key(
         &mut res,
         pw.as_bytes(),
         &pwhash::Salt::from_slice(salt).unwrap(),
         pwhash::OPSLIMIT_INTERACTIVE,
-        pwhash::MEMLIMIT_INTERACTIVE).unwrap();
+        pwhash::MEMLIMIT_INTERACTIVE,
+    )
+    .unwrap();
 
-    key.copy_from_slice(&res[0 .. KEYBYTES]);
-    hash.copy_from_slice(&res[KEYBYTES .. DERIVBYTES]);
+    key.copy_from_slice(&res[0..KEYBYTES]);
+    hash.copy_from_slice(&res[KEYBYTES..DERIVBYTES]);
 }
 
 pub fn get_key(user: &User, pw: &str) -> Result<Key, String> {
@@ -62,8 +64,7 @@ pub fn get_key(user: &User, pw: &str) -> Result<Key, String> {
 }
 
 pub fn derive_subkey(k: &Key, id: &[u8]) -> Key {
-    let auth::Tag(sk) = auth::authenticate(id,
-            &auth::Key::from_slice(k).unwrap());
+    let auth::Tag(sk) = auth::authenticate(id, &auth::Key::from_slice(k).unwrap());
     sk
 }
 
@@ -109,10 +110,9 @@ pub fn encrypt_blob(k: &Key, m: &[u8]) -> Vec<u8> {
 }
 
 pub fn decrypt_blob(k: &Key, c: &[u8]) -> Result<Vec<u8>, ()> {
-    let nonce = secretbox::Nonce::from_slice(&c[ .. secretbox::NONCEBYTES])
-        .unwrap();
+    let nonce = secretbox::Nonce::from_slice(&c[..secretbox::NONCEBYTES]).unwrap();
     let key = secretbox::Key::from_slice(k).unwrap();
-    secretbox::open(&c[secretbox::NONCEBYTES .. ], &nonce, &key)
+    secretbox::open(&c[secretbox::NONCEBYTES..], &nonce, &key)
 }
 
 pub fn password_id(namekey: &Key, name: &str) -> Tag {

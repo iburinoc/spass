@@ -6,7 +6,7 @@ pub struct PasswCharset {
     pub lower: bool,
     pub upper: bool,
     pub digit: bool,
-    pub sym: bool
+    pub sym: bool,
 }
 
 fn get_chars(opts: &PasswCharset) -> Result<Vec<char>, String> {
@@ -36,8 +36,7 @@ fn get_entropy(len: usize, numchars: usize) -> i64 {
     total as i64
 }
 
-pub fn generate(len: usize, opts: &PasswCharset) ->
-        Result<(String, i64), String> {
+pub fn generate(len: usize, opts: &PasswCharset) -> Result<(String, i64), String> {
     let chars = get_chars(opts)?;
 
     let mut pw = String::new();

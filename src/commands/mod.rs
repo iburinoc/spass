@@ -2,11 +2,11 @@ extern crate clap;
 
 use clap::ArgMatches;
 
-use database;
 use crypto;
 use crypto::Key;
+use database;
 use database::Connection;
-use types::{Password,User};
+use types::{Password, User};
 
 use super::prompt_passw;
 
@@ -29,8 +29,7 @@ fn get_keys(key: &Key) -> (Key, Key, Key) {
     (ikey, nkey, pkey)
 }
 
-pub type CmdFn = fn(&ArgMatches, &User, &Key, &mut Connection)
-    -> Result<(), String>;
+pub type CmdFn = fn(&ArgMatches, &User, &Key, &mut Connection) -> Result<(), String>;
 pub static COMMANDS: &'static [(&str, CmdFn)] = &[
     ("add", add),
     ("chpw", chpw),
@@ -40,12 +39,7 @@ pub static COMMANDS: &'static [(&str, CmdFn)] = &[
     ("rm", rm),
 ];
 
-
-
-pub fn add(args: &ArgMatches,
-           user: &User,
-           key: &Key,
-           conn: &mut Connection) -> Result<(), String> {
+pub fn add(args: &ArgMatches, user: &User, key: &Key, conn: &mut Connection) -> Result<(), String> {
     let (ikey, nkey, pkey) = get_keys(key);
 
     let name = args.value_of("name").unwrap();
@@ -61,12 +55,14 @@ pub fn add(args: &ArgMatches,
         return Err("Passwords didn't match".into());
     };
 
-    database::store_password(conn,
+    database::store_password(
+        conn,
         &Password {
             id: id,
             name: crypto::encrypt_blob(&nkey, name.as_bytes()),
             password: crypto::encrypt_blob(&pkey, pw.as_bytes()),
-        });
+        },
+    );
 
     update_verify(user, key, conn);
 
@@ -75,10 +71,12 @@ pub fn add(args: &ArgMatches,
     Ok(())
 }
 
-pub fn chpw(_args: &ArgMatches,
-            _user: &User,
-            key: &Key,
-            conn: &mut Connection) -> Result<(), String> {
+pub fn chpw(
+    _args: &ArgMatches,
+    _user: &User,
+    key: &Key,
+    conn: &mut Connection,
+) -> Result<(), String> {
     let (_, nkey, pkey) = get_keys(key);
 
     let pw = prompt_passw("New master password: ").unwrap();
@@ -99,8 +97,7 @@ pub fn chpw(_args: &ArgMatches,
         let name = crypto::decrypt_blob(&nkey, passw.name.as_ref()).unwrap();
         let pw = crypto::decrypt_blob(&pkey, passw.password.as_ref()).unwrap();
         let npassw = Password {
-            id: crypto::password_id(&nikey,
-                                    str::from_utf8(name.as_ref()).unwrap()),
+            id: crypto::password_id(&nikey, str::from_utf8(name.as_ref()).unwrap()),
             name: crypto::encrypt_blob(&nnkey, name.as_ref()),
             password: crypto::encrypt_blob(&npkey, pw.as_ref()),
         };
@@ -116,10 +113,7 @@ pub fn chpw(_args: &ArgMatches,
     Ok(())
 }
 
-pub fn gen(args: &ArgMatches,
-           user: &User,
-           key: &Key,
-           conn: &mut Connection) -> Result<(), String> {
+pub fn gen(args: &ArgMatches, user: &User, key: &Key, conn: &mut Connection) -> Result<(), String> {
     let (ikey, nkey, pkey) = get_keys(key);
 
     let name = args.value_of("name").unwrap();
@@ -155,10 +149,12 @@ pub fn gen(args: &ArgMatches,
     Ok(())
 }
 
-pub fn get(args: &ArgMatches,
-           _user: &User,
-           key: &Key,
-           conn: &mut Connection) -> Result<(), String> {
+pub fn get(
+    args: &ArgMatches,
+    _user: &User,
+    key: &Key,
+    conn: &mut Connection,
+) -> Result<(), String> {
     let (ikey, _, pkey) = get_keys(key);
 
     let name = args.value_of("name").unwrap();
@@ -171,30 +167,27 @@ pub fn get(args: &ArgMatches,
                 let passw = String::from_utf8_lossy(bytes.as_ref());
                 println!("{}", passw);
                 Ok(())
-            },
+            }
             Err(_) => Err(format!("Failed to decrypt password {}", name)),
         },
-        None => Err(format!("Password {} not found", name))
+        None => Err(format!("Password {} not found", name)),
     }
 }
 
-pub fn ls(_args: &ArgMatches,
-          _user: &User,
-          key: &Key,
-          conn: &mut Connection) -> Result<(), String> {
+pub fn ls(
+    _args: &ArgMatches,
+    _user: &User,
+    key: &Key,
+    conn: &mut Connection,
+) -> Result<(), String> {
     let passwds = database::get_passwords(conn);
     let nkey = crypto::derive_subkey(key, "NAME".as_bytes());
 
-    let mut names: Vec<String> = passwds.iter()
-        .map(|pw| {
-            match crypto::decrypt_blob(&nkey, pw.name.as_ref()) {
-                Ok(name) => {
-                    String::from_utf8_lossy(name.as_ref()).into_owned()
-                },
-                Err(_) => {
-                    String::new()
-                },
-            }
+    let mut names: Vec<String> = passwds
+        .iter()
+        .map(|pw| match crypto::decrypt_blob(&nkey, pw.name.as_ref()) {
+            Ok(name) => String::from_utf8_lossy(name.as_ref()).into_owned(),
+            Err(_) => String::new(),
         })
         .collect();
     names.sort();
@@ -205,10 +198,7 @@ pub fn ls(_args: &ArgMatches,
     Ok(())
 }
 
-pub fn rm(args: &ArgMatches,
-          user: &User,
-          key: &Key,
-          conn: &mut Connection) -> Result<(), String> {
+pub fn rm(args: &ArgMatches, user: &User, key: &Key, conn: &mut Connection) -> Result<(), String> {
     let (ikey, _, _) = get_keys(key);
 
     let name = args.value_of("name").unwrap();
