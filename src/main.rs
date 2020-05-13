@@ -5,7 +5,7 @@ extern crate rusqlite;
 extern crate shellexpand;
 extern crate sodiumoxide;
 
-use std::{error, ffi, fs, io, path, process};
+use std::{ffi, fs, io, path, process};
 
 use clap::{App, Arg, SubCommand};
 
@@ -148,7 +148,7 @@ fn run_app() -> Result<(), String> {
         }
     }
 
-    crypto::init();
+    crypto::init().unwrap();
     let mut conn = open_database(app_m.value_of_os("database"))?;
 
     let (user, key) = match database::get_user(&conn) {
@@ -180,7 +180,7 @@ fn open_database(dbarg: Option<&ffi::OsStr>) -> Result<Connection, String> {
     let path = if let Some(path) = dbarg {
         path.to_os_string()
     } else {
-        try!(get_dbpath())
+        get_dbpath()?
     };
 
     let dbpath = path::PathBuf::from(&*shellexpand::tilde(&*path.to_string_lossy()));
@@ -205,9 +205,7 @@ fn get_dbpath() -> Result<ffi::OsString, String> {
             if err.kind() == io::ErrorKind::NotFound {
                 create_conf(&expath)
             } else {
-                use error::Error;
-
-                Err(err.description().to_string())
+                Err(err.to_string())
             }
         }
     }
@@ -228,11 +226,7 @@ fn create_conf(confpath: &path::Path) -> Result<ffi::OsString, String> {
 
             Ok(path.trim().into())
         }
-        Err(err) => {
-            use error::Error;
-
-            Err(err.description().into())
-        }
+        Err(err) => Err(err.to_string()),
     }
 }
 

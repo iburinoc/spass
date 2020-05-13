@@ -1,6 +1,7 @@
 extern crate clap;
 
 use clap::ArgMatches;
+use rusqlite::params;
 
 use crypto;
 use crypto::Key;
@@ -86,7 +87,7 @@ pub fn chpw(
 
     // TODO figure out borrow issue here
     //let mut tx = conn.transaction().unwrap();
-    conn.execute("BEGIN", &[]).unwrap();
+    conn.execute("BEGIN", params![]).unwrap();
     let (mut nuser, newkey) = crypto::create_user(&pw);
     let (nikey, nnkey, npkey) = get_keys(&newkey);
 
@@ -106,7 +107,7 @@ pub fn chpw(
     nuser.sig = crypto::compute_file_sig(&newkey, conn);
     database::set_user(conn, &nuser);
     //tx.commit().unwrap();
-    conn.execute("COMMIT", &[]).unwrap();
+    conn.execute("COMMIT", params![]).unwrap();
 
     println!("Password successfully changed");
 
